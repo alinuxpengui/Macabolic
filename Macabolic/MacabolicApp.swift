@@ -51,10 +51,10 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var showUpToDateMessage = false
     @Published var isDownloading = false
     @Published var updateProgress: Double = 0
-    @Published var isInstalling = false // This was already present and is confirmed to be kept.
+    @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.2.7"
+    private let currentVersion = "1.2.8"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?

@@ -255,7 +255,7 @@ struct PreferencesView: View {
                     VStack(alignment: .leading) {
                         Text(languageService.s("ytdlp_update"))
                         if let message = ytdlpUpdateMessage {
-                            Text("v1.2.7")
+                            Text("v1.2.8")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -291,7 +291,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.2.7")
+                Text(languageService.s("version") + " 1.2.8")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 

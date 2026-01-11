@@ -10,7 +10,7 @@ class YtdlpService: ObservableObject {
     
     private var ytdlpPath: URL?
     private var ffmpegPath: URL?
-    private let localVersion = "1.2.7"
+    private let localVersion = "1.2.8"
     private let bundledYtdlpName = "yt-dlp_macos"
     
     init() {
