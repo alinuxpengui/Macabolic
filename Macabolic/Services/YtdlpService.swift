@@ -309,7 +309,7 @@ class YtdlpService: ObservableObject {
         args.append(url)
         
 
-        let outputPath = try await runDownloadProcess(args: args, onProgress: onProgress, onOutput: onOutput)
+        let outputPath = try await runDownloadProcess(args: args, saveFolder: options.saveFolder, onProgress: onProgress, onOutput: onOutput)
         
         return URL(fileURLWithPath: outputPath)
     }
@@ -394,6 +394,7 @@ class YtdlpService: ObservableObject {
     
     private func runDownloadProcess(
         args: [String],
+        saveFolder: URL,
         onProgress: @escaping (Double, String?, String?) -> Void,
         onOutput: @escaping (String) -> Void
     ) async throws -> String {
@@ -404,6 +405,7 @@ class YtdlpService: ObservableObject {
             
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
             process.arguments = args
+            process.currentDirectoryURL = saveFolder
             process.standardOutput = outputPipe
             process.standardError = errorPipe
             

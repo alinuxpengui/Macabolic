@@ -277,7 +277,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.2.4")
+                Text(languageService.s("version") + " 1.2.5")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
@@ -413,7 +413,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var updateProgress: Double = 0
     @Published var isInstalling = false
     
-    private let currentVersion = "1.2.4"
+    private let currentVersion = "1.2.5"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
