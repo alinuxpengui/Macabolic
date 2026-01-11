@@ -1,0 +1,67 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.user.*
+*.userosscache
+*.sln.docstates
+
+# Directories
+out/
+out-linux/
+out-windows/
+out-mac/
+build/
+build-linux/
+build-windows/
+build-mac/
+bin/
+.cache/
+.vs/
+.vscode/
+.idea/
+.fleet/
+.flatpak-builder/
+.flatpak/
+_nickbuild/
+*.snap
+
+# CMake
+CMakeUserPresets.json
+compile_commands.json
+
+# Setup Files
+inno/*.exe
