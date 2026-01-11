@@ -54,7 +54,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.2.8"
+    private let currentVersion = "1.2.9"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -161,21 +161,18 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     
     func restartApp() {
         let appPath = Bundle.main.bundlePath
-        let script = "sleep 0.5; open \"\(appPath)\""
+        // pkill Macabolic identifies the process by name and kills it. 
+        // We use a background subshell to reopen the app after a short sleep.
+        let script = "(sleep 1; open \"\(appPath)\") & disown; pkill Macabolic"
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = ["-c", script]
         
         do {
             try process.run()
-            NSApp.terminate(nil)
         } catch {
             NSApp.terminate(nil)
         }
-    }
-    
-    func closeApp() {
-        NSApp.terminate(nil)
     }
 }
 

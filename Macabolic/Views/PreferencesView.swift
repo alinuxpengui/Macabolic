@@ -68,9 +68,6 @@ struct PreferencesView: View {
             Button(languageService.s("restart")) {
                 updateChecker.restartApp()
             }
-            Button(languageService.s("close"), role: .destructive) {
-                updateChecker.closeApp()
-            }
         } message: {
             Text(languageService.s("update_ready_message"))
         }
@@ -255,7 +252,7 @@ struct PreferencesView: View {
                     VStack(alignment: .leading) {
                         Text(languageService.s("ytdlp_update"))
                         if let message = ytdlpUpdateMessage {
-                            Text("v1.2.8")
+                            Text("v1.2.9")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -291,7 +288,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.2.8")
+                Text(languageService.s("version") + " 1.2.9")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
