@@ -46,6 +46,10 @@ Macabolic is a native macOS frontend for the powerful [yt-dlp](https://github.co
 - **Parabolic by Nickvision:** This project is a macOS-native port based on the original [Parabolic](https://github.com/NickvisionApps/Parabolic) application.
 - **yt-dlp:** The core engine that makes video downloading possible.
 
+## Legal Disclaimer ⚖️
+
+Videos on YouTube and other sites may be subject to DMCA protection. The authors of Parabolic/Macabolic do not endorse, and are not responsible for, the use of this application in means that will violate these laws.
+
 ## License ⚖️
 
 This project is licensed under the **GNU General Public License v3.0**. See the [LICENSE](LICENSE) file for details.

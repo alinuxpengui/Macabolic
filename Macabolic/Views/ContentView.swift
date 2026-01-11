@@ -38,12 +38,12 @@ struct ContentView: View {
         } message: {
             Text(String(format: languageService.s("update_available_message"), updateChecker.latestVersion ?? ""))
         }
-        .alert("Yasal Uyarı", isPresented: $downloadManager.showDisclaimer) {
-            Button("Anladım") {
+        .alert(languageService.s("legal_disclaimer_title"), isPresented: $downloadManager.showDisclaimer) {
+            Button(languageService.s("close")) {
                 downloadManager.acknowledgeDisclaimer()
             }
         } message: {
-            Text("YouTube ve diğer sitelerdeki videolar telif hakkı yasalarıyla korunuyor olabilir. Macabolic geliştiricileri, bu uygulamanın yasaları ihlal eden şekilde kullanılmasını desteklemiyor ve bundan sorumlu değildir.\n\nBu uygulama Nickvision'ın Parabolic uygulamasından esinlenilmiştir.")
+            Text(languageService.s("legal_disclaimer_message"))
         }
         .frame(minWidth: 900, minHeight: 600)
     }

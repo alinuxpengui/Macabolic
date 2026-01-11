@@ -54,7 +54,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.3.0"
+    private let currentVersion = "1.3.1"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -370,7 +370,9 @@ class LanguageService: ObservableObject {
             "later": "Daha Sonra",
             "restart": "Yeniden Başlat",
             "update_ready_title": "Güncelleme Hazır",
-            "update_ready_message": "Yeni sürüm dosyaları hazırlandı. Değişikliklerin etkili olması için uygulamayı yeniden başlatmanız gerekiyor."
+            "update_ready_message": "Yeni sürüm dosyaları hazırlandı. Değişikliklerin etkili olması için uygulamayı yeniden başlatmanız gerekiyor.",
+            "legal_disclaimer_title": "Yasal Uyarı",
+            "legal_disclaimer_message": "YouTube ve diğer sitelerdeki videolar DMCA (Telif Hakkı) korumasına tabi olabilir. Macabolic geliştiricileri, bu uygulamanın yasaları ihlal eden şekilde kullanılmasını onaylamaz ve bundan sorumlu değildir."
         ],
         .english: [
             "home": "Home",
@@ -491,7 +493,9 @@ class LanguageService: ObservableObject {
             "later": "Later",
             "restart": "Restart",
             "update_ready_title": "Update Ready",
-            "update_ready_message": "The new version has been installed. Please restart the app to apply the changes."
+            "update_ready_message": "The new version has been installed. Please restart the app to apply the changes.",
+            "legal_disclaimer_title": "Legal Copyright Disclaimer",
+            "legal_disclaimer_message": "Videos on YouTube and other sites may be subject to DMCA protection. The authors of Parabolic do not endorse, and are not responsible for, the use of this application in means that will violate these laws."
         ]
     ]
 }
