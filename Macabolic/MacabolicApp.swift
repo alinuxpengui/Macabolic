@@ -54,7 +54,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.3.4"
+    private let currentVersion = "1.3.5"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -372,7 +372,7 @@ class LanguageService: ObservableObject {
             "later": "Daha Sonra",
             "restart": "Yeniden Başlat",
             "update_ready_title": "Güncelleme Kuruldu",
-            "update_ready_message": "Yeni sürüm başarıyla kuruldu. Değişikliklerin etkili olması için lütfen önce bu pencereyi kapatın, ardından 'Command + Q' ile uygulamadan tamamen çıkıp tekrar başlatın.",
+            "update_ready_message": "Yeni sürüm başarıyla kuruldu. Değişikliklerin etkili olması için lütfen önce bu pencereyi kapatın, ardından önce kırmızı butonla ayarları kapatın, ardından 'Command + Q' ile uygulamadan tamamen çıkıp tekrar başlatın.",
             "legal_disclaimer_title": "Yasal Uyarı",
             "legal_disclaimer_message": "YouTube ve diğer sitelerdeki videolar DMCA (Telif Hakkı) korumasına tabi olabilir. Macabolic geliştiricileri, bu uygulamanın yasaları ihlal eden şekilde kullanılmasını onaylamaz ve bundan sorumlu değildir."
         ],
@@ -498,7 +498,7 @@ class LanguageService: ObservableObject {
             "later": "Later",
             "restart": "Restart",
             "update_ready_title": "Update Installed",
-            "update_ready_message": "The new version has been installed successfully. To apply the changes, please close this window, then quit the app completely with 'Command + Q' and restart it.",
+            "update_ready_message": "The new version has been installed successfully. To apply the changes, please close this window first, then close the settings with the red button, and finally quit the app completely with 'Command + Q' and restart it.",
             "legal_disclaimer_title": "Legal Copyright Disclaimer",
             "legal_disclaimer_message": "Videos on YouTube and other sites may be subject to DMCA protection. The authors of Parabolic do not endorse, and are not responsible for, the use of this application in means that will violate these laws."
         ]

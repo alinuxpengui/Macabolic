@@ -288,7 +288,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.3.4")
+                Text(languageService.s("version") + " 1.3.5")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
@@ -328,6 +328,15 @@ struct PreferencesView: View {
                 .padding(.horizontal, 20)
                 
 
+                GroupBox(languageService.s("legal_disclaimer_title")) {
+                    Text(languageService.s("legal_disclaimer_message"))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .padding(.vertical, 4)
+                }
+                .padding(.horizontal, 20)
+                
                 GroupBox(languageService.s("license")) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("GNU General Public License v3.0")
