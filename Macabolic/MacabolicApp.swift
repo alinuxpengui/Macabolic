@@ -54,7 +54,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.3.2"
+    private let currentVersion = "1.3.3"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -307,6 +307,8 @@ class LanguageService: ObservableObject {
             "app_updates": "Uygulama Güncellemesi",
             "latest": "En son",
             "original_project": "Orijinal Proje",
+            "macos_port": "macOS Portu",
+            "video_downloading": "Video İndirme",
             "view_license": "Lisansı Görüntüle",
             "app_desc": "YouTube ve binlerce siteden video indirmenizi sağlayan modern bir macOS uygulaması.",
             "extra_settings": "Ekstra Ayarlar",
@@ -430,6 +432,8 @@ class LanguageService: ObservableObject {
             "app_updates": "App Updates",
             "latest": "Latest",
             "original_project": "Original Project",
+            "macos_port": "macOS Port",
+            "video_downloading": "Video Downloading",
             "view_license": "View License",
             "app_desc": "A modern macOS application that allows you to download videos from YouTube and thousands of sites.",
             "extra_settings": "Extra Settings",

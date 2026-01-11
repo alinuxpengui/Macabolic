@@ -252,7 +252,7 @@ struct PreferencesView: View {
                     VStack(alignment: .leading) {
                         Text(languageService.s("ytdlp_update"))
                         if let message = ytdlpUpdateMessage {
-                            Text("v1.3.2")
+                            Text("v1.3.3")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -288,7 +288,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.3.2")
+                Text(languageService.s("version") + " 1.3.3")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
@@ -311,13 +311,13 @@ struct PreferencesView: View {
                                 .font(.caption)
                         }
                         HStack {
-                            Text("macOS Port:")
+                            Text(languageService.s("macos_port") + ":")
                             Spacer()
                             Text("alinuxpengui")
                                 .font(.caption)
                         }
                         HStack {
-                            Text("Video İndirme:")
+                            Text(languageService.s("video_downloading") + ":")
                             Spacer()
                             Link("yt-dlp", destination: URL(string: "https://github.com/yt-dlp/yt-dlp")!)
                                 .font(.caption)
