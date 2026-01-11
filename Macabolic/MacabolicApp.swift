@@ -54,7 +54,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.2.9"
+    private let currentVersion = "1.3.0"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -260,7 +260,7 @@ class LanguageService: ObservableObject {
             "keyring": "Kimlik Bilgileri",
             "settings": "Ayarlar",
             "new_download": "Yeni İndirme Ekle",
-            "url_placeholder": "YouTube ve binlerce siteden video indirin",
+            "url_placeholder": "YouTube ve diğer [desteklenen](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) sitelerden video indirin",
             "stat_downloading": "İndiriliyor",
             "stat_queued": "Kuyrukta",
             "stat_completed": "Tamamlandı",
@@ -381,7 +381,7 @@ class LanguageService: ObservableObject {
             "keyring": "Keyring",
             "settings": "Settings",
             "new_download": "Add New Download",
-            "url_placeholder": "Download video from YouTube and other sites",
+            "url_placeholder": "Download video from YouTube and other [supported](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) sites",
             "stat_downloading": "Downloading",
             "stat_queued": "In Queue",
             "stat_completed": "Completed",

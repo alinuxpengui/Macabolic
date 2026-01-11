@@ -218,7 +218,7 @@ struct HomeView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
-            Text(languageService.s("url_placeholder"))
+            Text(LocalizedStringKey(languageService.s("url_placeholder")))
                 .font(.title3)
                 .foregroundColor(.secondary)
             
