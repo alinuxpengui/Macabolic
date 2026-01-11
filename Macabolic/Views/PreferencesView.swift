@@ -277,7 +277,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.2.3")
+                Text(languageService.s("version") + " 1.2.4")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
@@ -413,7 +413,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var updateProgress: Double = 0
     @Published var isInstalling = false
     
-    private let currentVersion = "1.2.3"
+    private let currentVersion = "1.2.4"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -479,13 +479,27 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     private func installUpdate(dmgPath: String) {
         let appPath = Bundle.main.bundlePath
         let script = """
-        sleep 2
-        hdiutil mount "\(dmgPath)" -mountpoint /tmp/MacabolicUpdateMount -quiet
-        if [ -d "/tmp/MacabolicUpdateMount/Macabolic.app" ]; then
+        exec > /tmp/macabolic_update.log 2>&1
+        echo "Starting update..."
+        sleep 3
+        MOUNT_POINT="/tmp/MacabolicUpdate_$(date +%s)"
+        mkdir -p "$MOUNT_POINT"
+        echo "Mounting $dmgPath to $MOUNT_POINT"
+        hdiutil mount "\(dmgPath)" -mountpoint "$MOUNT_POINT" -quiet
+        
+        if [ -d "$MOUNT_POINT/Macabolic.app" ]; then
+            echo "Found new app, replacing..."
             rm -rf "\(appPath)"
-            cp -R "/tmp/MacabolicUpdateMount/Macabolic.app" "\(appPath)"
-            hdiutil unmount /tmp/MacabolicUpdateMount -quiet
+            ditto "$MOUNT_POINT/Macabolic.app" "\(appPath)"
+            echo "Unmounting..."
+            hdiutil unmount "$MOUNT_POINT" -quiet
+            rm -rf "$MOUNT_POINT"
+            echo "Launching new version..."
             open "\(appPath)"
+        else
+            echo "New app not found in DMG!"
+            hdiutil unmount "$MOUNT_POINT" -quiet
+            rm -rf "$MOUNT_POINT"
         fi
         """
         
@@ -495,9 +509,11 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
         
         do {
             try process.run()
-            NSApplication.shared.terminate(nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                NSApplication.shared.terminate(nil)
+            }
         } catch {
-            print("Guncelleme hatasi: \(error)")
+            print("Update error: \(error)")
             isInstalling = false
         }
     }
