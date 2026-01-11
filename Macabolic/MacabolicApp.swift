@@ -51,9 +51,10 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var showUpToDateMessage = false
     @Published var isDownloading = false
     @Published var updateProgress: Double = 0
-    @Published var isInstalling = false
+    @Published var isInstalling = false // This was already present and is confirmed to be kept.
+    @Published var needsRestart = false
     
-    private let currentVersion = "1.2.6"
+    private let currentVersion = "1.2.7"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -131,8 +132,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 ditto "$MOUNT_POINT/Macabolic.app" "\(appPath)"
                 hdiutil unmount "$MOUNT_POINT" -quiet
                 rm -rf "$MOUNT_POINT"
-                echo "Launching new version..."
-                open "\(appPath)"
+                echo "Update files replaced. Waiting for app to restart."
             else
                 echo "New app not found in DMG!"
                 hdiutil unmount "$MOUNT_POINT" -quiet
@@ -147,13 +147,35 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
         
         do {
             try process.run()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                NSApp.terminate(nil)
+            
+            // Wait 8 seconds then show restart UI
+            DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+                self.isInstalling = false
+                self.needsRestart = true
             }
         } catch {
             print("Update error: \(error)")
             isInstalling = false
         }
+    }
+    
+    func restartApp() {
+        let appPath = Bundle.main.bundlePath
+        let script = "sleep 0.5; open \"\(appPath)\""
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = ["-c", script]
+        
+        do {
+            try process.run()
+            NSApp.terminate(nil)
+        } catch {
+            NSApp.terminate(nil)
+        }
+    }
+    
+    func closeApp() {
+        NSApp.terminate(nil)
     }
 }
 
@@ -343,7 +365,15 @@ class LanguageService: ObservableObject {
             "format": "Format",
             "res_best": "En İyi",
             "res_worst": "En Düşük",
-            "app_up_to_date": "Uygulama güncel"
+            "app_up_to_date": "Uygulama güncel",
+            "downloading_update": "Güncelleme indiriliyor...",
+            "installing_update": "Güncelleme kuruluyor...",
+            "update_available_title": "Yeni Güncelleme Mevcut!",
+            "update_available_message": "Macabolic'in yeni sürümü (v%@) hazır. Şimdi indirmek ister misiniz?",
+            "later": "Daha Sonra",
+            "restart": "Yeniden Başlat",
+            "update_ready_title": "Güncelleme Hazır",
+            "update_ready_message": "Yeni sürüm dosyaları hazırlandı. Değişikliklerin etkili olması için uygulamayı yeniden başlatmanız gerekiyor."
         ],
         .english: [
             "home": "Home",
@@ -432,7 +462,7 @@ class LanguageService: ObservableObject {
             "keyring_empty": "No credentials",
             "keyring_desc": "Add credentials to access password-protected content",
             "add_credential": "Add Credential",
-            "new_credential": "New Credential",
+            "new_credential": "Add Credential",
             "edit_credential": "Edit Credential",
             "name_hint": "Name (e.g. YouTube Premium)",
             "name": "Name",
@@ -456,7 +486,15 @@ class LanguageService: ObservableObject {
             "format": "Format",
             "res_best": "Best Quality",
             "res_worst": "Worst Quality",
-            "app_up_to_date": "App is up to date"
+            "app_up_to_date": "App is up to date",
+            "downloading_update": "Downloading update...",
+            "installing_update": "Installing update...",
+            "update_available_title": "New Update Available!",
+            "update_available_message": "A new version of Macabolic (v%@) is ready. Would you like to download it now?",
+            "later": "Later",
+            "restart": "Restart",
+            "update_ready_title": "Update Ready",
+            "update_ready_message": "The new version has been installed. Please restart the app to apply the changes."
         ]
     ]
 }

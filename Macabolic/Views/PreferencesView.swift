@@ -64,6 +64,16 @@ struct PreferencesView: View {
         .onAppear {
             applyTheme(theme)
         }
+        .alert(languageService.s("update_ready_title"), isPresented: $updateChecker.needsRestart) {
+            Button(languageService.s("restart")) {
+                updateChecker.restartApp()
+            }
+            Button(languageService.s("close"), role: .destructive) {
+                updateChecker.closeApp()
+            }
+        } message: {
+            Text(languageService.s("update_ready_message"))
+        }
     }
     
 
@@ -170,6 +180,10 @@ struct PreferencesView: View {
                                 Text(languageService.s("installing_update"))
                                     .font(.caption)
                                     .foregroundColor(.orange)
+                            } else if updateChecker.needsRestart {
+                                Text("✅ \(languageService.s("update_ready_title"))")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
                             } else {
                                 Button(languageService.s("update_now")) {
                                     Task {
@@ -241,7 +255,7 @@ struct PreferencesView: View {
                     VStack(alignment: .leading) {
                         Text(languageService.s("ytdlp_update"))
                         if let message = ytdlpUpdateMessage {
-                            Text(message)
+                            Text("v1.2.7")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -277,7 +291,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.2.5")
+                Text(languageService.s("version") + " 1.2.7")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
