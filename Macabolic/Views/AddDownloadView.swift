@@ -208,14 +208,14 @@ struct AddDownloadView: View {
             Text(languageService.s("format"))
                 .font(.headline)
             
-            HStack(spacing: 20) {
+            HStack(spacing: 24) {
                 Picker(languageService.s("file_type"), selection: $fileType) {
                     ForEach(MediaFileType.allCases) { type in
                         Text(type.rawValue).tag(type)
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(width: 150)
+                .frame(minWidth: 200, alignment: .leading)
                 
                 if fileType.isVideo {
                     Picker(languageService.s("quality"), selection: $videoResolution) {
@@ -224,7 +224,7 @@ struct AddDownloadView: View {
                         }
                     }
                     .pickerStyle(.menu)
-                    .frame(width: 180)
+                    .frame(minWidth: 220, alignment: .leading)
                 }
             }
         }
