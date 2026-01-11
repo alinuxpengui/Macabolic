@@ -4,7 +4,9 @@ struct ContentView: View {
     @EnvironmentObject var downloadManager: DownloadManager
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var languageService: LanguageService
+    @EnvironmentObject var updateChecker: UpdateChecker
     @State private var showPreferences = false
+    @State private var showUpdateAlert = false
     
     var body: some View {
         NavigationSplitView {
@@ -23,6 +25,18 @@ struct ContentView: View {
         }
         .task {
             await downloadManager.initialize()
+            await updateChecker.checkForUpdates()
+            if updateChecker.hasUpdate {
+                showUpdateAlert = true
+            }
+        }
+        .alert(languageService.s("update_available_title"), isPresented: $showUpdateAlert) {
+            Button(languageService.s("update_now")) {
+                showPreferences = true
+            }
+            Button(languageService.s("later"), role: .cancel) { }
+        } message: {
+            Text(String(format: languageService.s("update_available_message"), updateChecker.latestVersion ?? ""))
         }
         .alert("Yasal Uyarı", isPresented: $downloadManager.showDisclaimer) {
             Button("Anladım") {

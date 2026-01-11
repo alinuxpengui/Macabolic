@@ -5,6 +5,7 @@ struct MacabolicApp: App {
     @StateObject private var downloadManager = DownloadManager()
     @StateObject private var appState = AppState()
     @StateObject private var languageService = LanguageService()
+    @StateObject private var updateChecker = UpdateChecker()
     
     var body: some Scene {
         WindowGroup {
@@ -12,6 +13,7 @@ struct MacabolicApp: App {
                 .environmentObject(downloadManager)
                 .environmentObject(appState)
                 .environmentObject(languageService)
+                .environmentObject(updateChecker)
         }
         .commands {
             CommandGroup(replacing: .newItem) {
@@ -34,8 +36,124 @@ struct MacabolicApp: App {
             PreferencesView()
                 .environmentObject(downloadManager)
                 .environmentObject(languageService)
+                .environmentObject(updateChecker)
         }
         #endif
+    }
+}
+
+
+@MainActor
+class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
+    @Published var isChecking = false
+    @Published var hasUpdate = false
+    @Published var latestVersion: String?
+    @Published var showUpToDateMessage = false
+    @Published var isDownloading = false
+    @Published var updateProgress: Double = 0
+    @Published var isInstalling = false
+    
+    private let currentVersion = "1.2.6"
+    private let repoOwner = "alinuxpengui"
+    private let repoName = "Macabolic"
+    private var downloadURL: URL?
+    
+    func checkForUpdates() async {
+        isChecking = true
+        let url = URL(string: "https://api.github.com/repos/\(repoOwner)/\(repoName)/releases/latest")!
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let tagName = json["tag_name"] as? String,
+               let assets = json["assets"] as? [[String: Any]] {
+                
+                latestVersion = tagName.replacingOccurrences(of: "v", with: "")
+                hasUpdate = (latestVersion ?? currentVersion) != currentVersion
+                
+                if let dlpAsset = assets.first(where: { ($0["name"] as? String)?.hasSuffix(".dmg") == true }),
+                   let downloadUrlStr = dlpAsset["browser_download_url"] as? String {
+                    downloadURL = URL(string: downloadUrlStr)
+                }
+                
+                if !hasUpdate {
+                    showUpToDateMessage = true
+                    try? await Task.sleep(nanoseconds: 3 * 1_000_000_000)
+                    showUpToDateMessage = false
+                }
+            }
+        } catch {
+            latestVersion = currentVersion
+            hasUpdate = false
+        }
+        isChecking = false
+    }
+    
+    func downloadAndInstallUpdate() async {
+        guard let url = downloadURL else { return }
+        isDownloading = true
+        updateProgress = 0
+        
+        let session = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
+        let downloadTask = session.downloadTask(with: url)
+        downloadTask.resume()
+    }
+    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite totalBytesExpectedToWrite: Int64) {
+        updateProgress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+    }
+    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        isDownloading = false
+        isInstalling = true
+        
+        let tempDmg = FileManager.default.temporaryDirectory.appendingPathComponent("Macabolic_Update.dmg")
+        try? FileManager.default.removeItem(at: tempDmg)
+        try? FileManager.default.moveItem(at: location, to: tempDmg)
+        
+        installUpdate(dmgPath: tempDmg.path)
+    }
+    
+    private func installUpdate(dmgPath: String) {
+        let appPath = Bundle.main.bundlePath
+        let script = """
+        (
+            exec > /tmp/macabolic_update.log 2>&1
+            echo "Starting update..."
+            sleep 3
+            MOUNT_POINT="/tmp/MacabolicUpdate_$(date +%s)"
+            mkdir -p "$MOUNT_POINT"
+            hdiutil mount "\(dmgPath)" -mountpoint "$MOUNT_POINT" -quiet
+            
+            if [ -d "$MOUNT_POINT/Macabolic.app" ]; then
+                echo "Found new app, replacing..."
+                rm -rf "\(appPath)"
+                ditto "$MOUNT_POINT/Macabolic.app" "\(appPath)"
+                hdiutil unmount "$MOUNT_POINT" -quiet
+                rm -rf "$MOUNT_POINT"
+                echo "Launching new version..."
+                open "\(appPath)"
+            else
+                echo "New app not found in DMG!"
+                hdiutil unmount "$MOUNT_POINT" -quiet
+                rm -rf "$MOUNT_POINT"
+            fi
+        ) & disown
+        """
+        
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = ["-c", script]
+        
+        do {
+            try process.run()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                NSApp.terminate(nil)
+            }
+        } catch {
+            print("Update error: \(error)")
+            isInstalling = false
+        }
     }
 }
 
