@@ -54,7 +54,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.3.3"
+    private let currentVersion = "1.3.4"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -327,6 +327,7 @@ class LanguageService: ObservableObject {
             "split_chapters": "Bölümlere ayır",
             "sponsorblock_hint": "SponsorBlock (reklamları atla)",
             "cancel": "İptal",
+            "ok": "Tamam",
             "download_btn": "İndir",
             "clear_history": "Geçmişi Temizle",
             "history_empty": "İndirme geçmişi boş",
@@ -370,8 +371,8 @@ class LanguageService: ObservableObject {
             "update_available_message": "Macabolic'in yeni sürümü (v%@) hazır. Şimdi indirmek ister misiniz?",
             "later": "Daha Sonra",
             "restart": "Yeniden Başlat",
-            "update_ready_title": "Güncelleme Hazır",
-            "update_ready_message": "Yeni sürüm kuruldu. Uygulama şimdi kapatılacak, lütfen uygulamayı manuel olarak tekrar başlatın.",
+            "update_ready_title": "Güncelleme Kuruldu",
+            "update_ready_message": "Yeni sürüm başarıyla kuruldu. Değişikliklerin etkili olması için lütfen önce bu pencereyi kapatın, ardından 'Command + Q' ile uygulamadan tamamen çıkıp tekrar başlatın.",
             "legal_disclaimer_title": "Yasal Uyarı",
             "legal_disclaimer_message": "YouTube ve diğer sitelerdeki videolar DMCA (Telif Hakkı) korumasına tabi olabilir. Macabolic geliştiricileri, bu uygulamanın yasaları ihlal eden şekilde kullanılmasını onaylamaz ve bundan sorumlu değildir."
         ],
@@ -452,6 +453,7 @@ class LanguageService: ObservableObject {
             "split_chapters": "Split into Chapters",
             "sponsorblock_hint": "SponsorBlock (skip ads/intro)",
             "cancel": "Cancel",
+            "ok": "OK",
             "download_btn": "Download",
             "clear_history": "Clear History",
             "history_empty": "Download history is empty",
@@ -495,8 +497,8 @@ class LanguageService: ObservableObject {
             "update_available_message": "A new version of Macabolic (v%@) is ready. Would you like to download it now?",
             "later": "Later",
             "restart": "Restart",
-            "update_ready_title": "Update Ready",
-            "update_ready_message": "The new version has been installed. The app will now close, please restart it manually.",
+            "update_ready_title": "Update Installed",
+            "update_ready_message": "The new version has been installed successfully. To apply the changes, please close this window, then quit the app completely with 'Command + Q' and restart it.",
             "legal_disclaimer_title": "Legal Copyright Disclaimer",
             "legal_disclaimer_message": "Videos on YouTube and other sites may be subject to DMCA protection. The authors of Parabolic do not endorse, and are not responsible for, the use of this application in means that will violate these laws."
         ]

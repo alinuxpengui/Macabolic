@@ -65,8 +65,8 @@ struct PreferencesView: View {
             applyTheme(theme)
         }
         .alert(languageService.s("update_ready_title"), isPresented: $updateChecker.needsRestart) {
-            Button(languageService.s("restart")) {
-                updateChecker.restartApp()
+            Button(languageService.s("ok")) {
+                updateChecker.needsRestart = false
             }
         } message: {
             Text(languageService.s("update_ready_message"))
@@ -252,7 +252,7 @@ struct PreferencesView: View {
                     VStack(alignment: .leading) {
                         Text(languageService.s("ytdlp_update"))
                         if let message = ytdlpUpdateMessage {
-                            Text("v1.3.3")
+                            Text("v1.3.4")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -288,7 +288,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.3.3")
+                Text(languageService.s("version") + " 1.3.4")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
