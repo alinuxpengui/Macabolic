@@ -326,7 +326,7 @@ struct PreferencesView: View {
                 }
                 .font(.caption)
                 
-                Text("alinuxpengui • Parabolic by Nickvision")
+                Text("alinuxpengui • bytemeowster")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
