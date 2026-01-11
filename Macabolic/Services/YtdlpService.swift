@@ -240,12 +240,12 @@ class YtdlpService: ObservableObject {
         }
         
         var args = [path.path]
-        
-
+        // FFmpeg and Temp location
         let appSupport = getAppSupportDirectory()
         args.append(contentsOf: ["--ffmpeg-location", appSupport.path])
+        args.append(contentsOf: ["--paths", "temp:/tmp"])
         
-
+        // Output template
         let outputTemplate: String
         if let customFilename = options.customFilename, !customFilename.isEmpty {
             outputTemplate = options.saveFolder.appendingPathComponent("\(customFilename).%(ext)s").path
