@@ -288,7 +288,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.5.2")
+                Text(languageService.s("version") + " 1.5.3")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 

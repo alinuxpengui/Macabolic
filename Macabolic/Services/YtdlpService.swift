@@ -10,7 +10,7 @@ class YtdlpService: ObservableObject {
     
     private var ytdlpPath: URL?
     private var ffmpegPath: URL?
-    private let localVersion = "1.5.2"
+    private let localVersion = "1.5.3"
     private let bundledYtdlpName = "yt-dlp_macos"
     
     init() {
@@ -169,12 +169,47 @@ class YtdlpService: ObservableObject {
             throw YtdlpError.notFound
         }
         
+        // 1. Strateji: Önce tekil video olarak dene (--no-playlist)
+        // Bu, hem normal videolar için hem de "playlist içindeki video" linkleri için çalışır.
+        do {
+             return try await fetchSingleVideoInfo(path: path.path, url: url, credential: credential)
+        } catch {
+            // Eğer parse hatası veya komut hatası alırsak ve URL bir playlist'e benziyorsa
+            // 2. Strateji: Playlist özeti olarak dene (--flat-playlist --dump-single-json)
+            // Bu, "saf playlist" linkleri (youtube.com/playlist?list=...) için gereklidir.
+            if url.contains("list=") || url.contains("/playlist") {
+                 return try await fetchPlaylistSummaryInfo(path: path.path, url: url, credential: credential)
+            }
+            throw error // Playlist değilse orijinal hatayı fırlat
+        }
+    }
+    
+    private func fetchSingleVideoInfo(path: String, url: String, credential: Credential?) async throws -> MediaInfo {
         var args = [
-            path.path,
+            path,
             "--dump-json",
             "--no-playlist",
-            "--no-warnings",
-            "--flat-playlist"
+            "--no-warnings"
+        ]
+        
+        if let credential = credential {
+            args.append(contentsOf: ["--username", credential.username, "--password", credential.password])
+        }
+        
+        args.append(url)
+        
+        // Standart video parse işlemi
+        let output = try await runCommand(args)
+        guard let data = output.data(using: .utf8) else { throw YtdlpError.parseError }
+        return try JSONDecoder().decode(MediaInfo.self, from: data)
+    }
+
+    private func fetchPlaylistSummaryInfo(path: String, url: String, credential: Credential?) async throws -> MediaInfo {
+        var args = [
+            path,
+            "--dump-single-json",
+            "--flat-playlist",
+            "--no-warnings"
         ]
         
         if let credential = credential {
@@ -184,14 +219,45 @@ class YtdlpService: ObservableObject {
         args.append(url)
         
         let output = try await runCommand(args)
+        guard let data = output.data(using: .utf8) else { throw YtdlpError.parseError }
         
-        guard let data = output.data(using: .utf8) else {
-            throw YtdlpError.parseError
-        }
-        
+        // Playlist metadatasını bir MediaInfo nesnesine dönüştür
+        // --flat-playlist çıktısında formatlar vb. yoktur, sadece title, id, entries gelir
         let decoder = JSONDecoder()
-        let info = try decoder.decode(MediaInfo.self, from: data)
-        return info
+        
+        // Önce gevşek bir yapıya decode edip manuel mapleyelim veya MediaInfo'nun esnekliğine güvenelim.
+        // MediaInfo zaten çoğu alanı optional yaptığı için direkt deniyoruz.
+        // Ancak 'entries' alanı MediaInfo'da yok, decoder bunu görmezden gelecek.
+        // ID ve Title playlist bilgisi olacak.
+        var info = try decoder.decode(MediaInfo.self, from: data)
+        
+        // Bu bir playlist olduğu için manuel işaretleyelim (UI'da banner göstermek için)
+        // Eğer json'dan gelen 'playlist' alanı boşsa, ID'yi playlist ID olarak set edelim.
+        // MediaInfo struct'ı immutable (let) olduğu için yeni bir nesne oluşturmamız gerekebilir
+        // veya MediaInfo'yu var yapmalıydık. Şimdilik hack: MediaInfo'yu extension ile güncelleyemeyiz.
+        // Ama MediaInfo struct'ını değiştirmek yerine, 'playlist' alanının JSON'dan gelmesini umuyoruz.
+        // Flat playlist çıktısında "id" playlist ID'sidir. "title" playlist başlığıdır.
+        // "playlist" alanı ise boştur (çünkü video bir playlist'in parçası değil, kendisi playlist).
+        
+        // UI'ın anlaması için 'playlist' alanının dolu olması lazım.
+        // Bu yüzden decode edilen veriden yeni bir MediaInfo türetelim.
+        return MediaInfo(
+            id: info.id,
+            title: info.title,
+            description: info.description,
+            thumbnail: info.thumbnail, // Bazen playlist thumbnail gelir
+            duration: nil,
+            uploader: info.uploader,
+            uploadDate: nil,
+            viewCount: info.viewCount,
+            likeCount: nil,
+            formats: nil,
+            subtitles: nil,
+            chapters: nil,
+            playlist: info.id, // Playlist olduğunu belirtmek için ID'yi buraya da koyuyoruz
+            playlistIndex: nil,
+            playlistCount: info.playlistCount ?? info.viewCount // Bazen viewCount yerine entry count gelebilir
+        )
     }
     
 
