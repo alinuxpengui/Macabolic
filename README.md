@@ -26,14 +26,12 @@ Macabolic is a native macOS frontend for the powerful [yt-dlp](https://github.co
 - **Multi-language:** Supports English and Turkish (automatically detects system language).
 - **Auto-Update:** Self-manages `yt-dlp` updates to ensure maximum compatibility.
 
-## Installation 💾
+## Installation 🚀
 
-1. Download the latest `Macabolic.app` from the [Releases](https://github.com/alinuxpengui/Macabolic/releases) page.
-2. Drag it to your `Applications` folder.
-3. Open and start downloading!
-
-> [!NOTE]
-> On the first launch, Macabolic will automatically download the latest `yt-dlp` executable. No manual setup is required.
+- **Download:** Download the latest `Macabolic.dmg` from the [Releases](https://github.com/alinuxpengui/Macabolic/releases) page.
+- **Install:** Open the DMG file and drag **Macabolic** to your `Applications` folder.
+- **First Launch:** Since the app is not notarized, you may need to right-click the app and select **Open**, or go to `System Settings > Privacy & Security` and click **Open Anyway**.
+- **Initial Setup:** When the app opens, you will be greeted by a **Legal Disclaimer**. Please read and confirm it. Go to **Preferences (⌘,)** to set your **Language** and **Default Save Folder**.
 
 ## Build Requirements 🛠️
 
