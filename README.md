@@ -56,3 +56,13 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
 
 ---
 **Maintained by [alinuxpengui](https://github.com/alinuxpengui)**
+
+## Star History 🌟
+
+<a href="https://star-history.com/#alinuxpengui/Macabolic&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=alinuxpengui/Macabolic&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=alinuxpengui/Macabolic&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=alinuxpengui/Macabolic&type=Date" />
+ </picture>
+</a>
