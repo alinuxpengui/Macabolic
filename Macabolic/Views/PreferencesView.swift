@@ -252,7 +252,7 @@ struct PreferencesView: View {
                     VStack(alignment: .leading) {
                         Text(languageService.s("ytdlp_update"))
                         if let message = ytdlpUpdateMessage {
-                            Text("v1.3.4")
+                            Text(message)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -288,7 +288,7 @@ struct PreferencesView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text(languageService.s("version") + " 1.5.5")
+                Text(languageService.s("version") + " \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.0")")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
@@ -362,7 +362,7 @@ struct PreferencesView: View {
                 }
                 .font(.caption)
                 
-                Text("alinuxpengui • bytemeowster")
+                Text("© 2026 alinuxpengui")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
