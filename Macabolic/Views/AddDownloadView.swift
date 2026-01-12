@@ -322,12 +322,11 @@ struct AddDownloadView: View {
                         Toggle(languageService.s("download_subtitles"), isOn: $downloadSubtitles)
                             .disabled(availableSubtitles.isEmpty)
                         
-                        if downloadSubtitles || !availableSubtitles.isEmpty {
-                            if availableSubtitles.isEmpty {
-                                Text(languageService.s("no_subtitles"))
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            } else {
+                        if availableSubtitles.isEmpty && mediaInfo != nil {
+                            Text(languageService.s("no_subtitles"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else if downloadSubtitles {
                                 Menu {
                                     ForEach(availableSubtitles) { sub in
                                         Button {
@@ -356,7 +355,6 @@ struct AddDownloadView: View {
                                     }
                                 }
                                 .menuStyle(.borderedButton)
-                            }
                             Toggle(languageService.s("embed_video"), isOn: $embedSubtitles)
                         }
                     }
