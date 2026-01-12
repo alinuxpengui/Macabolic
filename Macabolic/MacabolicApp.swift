@@ -57,7 +57,9 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.4.2"
+    private var currentVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5.2"
+    }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -319,7 +321,7 @@ class LanguageService: ObservableObject {
             "video_url": "Video / Playlist URL",
             "url_hint": "YouTube video veya oynatma listesi linki...",
             "whats_new_title": "Macabolic Güncellendi! 🎉",
-            "whats_new_message": "v1.5.1 ile gelen yenilikler:\n• Akıllı Playlist desteği: Artık tüm listeyi veya seçtiğiniz videoları indirebilirsiniz.\n• Playlist URL hataları giderildi.\n• Arayüz iyileştirmeleri yapıldı.",
+            "whats_new_message": "v1.5.2 ile gelen yenilikler:\n• Akıllı Playlist desteği: Artık tüm listeyi veya seçtiğiniz videoları indirebilirsiniz.\n• Playlist URL hataları giderildi.\n• Arayüz iyileştirmeleri yapıldı.",
             "paste_from_clipboard": "Panodan Yapıştır",
             "fetch_info": "Bilgi Al",
             "quality": "Kalite",
@@ -455,7 +457,7 @@ class LanguageService: ObservableObject {
             "video_url": "Video / Playlist URL",
             "url_hint": "YouTube video or playlist link...",
             "whats_new_title": "Macabolic Updated! 🎉",
-            "whats_new_message": "What's new in v1.5.1:\n• Smart Playlist Support: Download entire lists or select specific videos.\n• Fixed Playlist URL parsing errors.\n• UI improvements and bug fixes.",
+            "whats_new_message": "What's new in v1.5.2:\n• Smart Playlist Support: Download entire lists or select specific videos.\n• Fixed Playlist URL parsing errors.\n• UI improvements and bug fixes.",
             "paste_from_clipboard": "Paste from Clipboard",
             "fetch_info": "Get Video Information",
             "quality": "Quality",
