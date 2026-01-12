@@ -58,7 +58,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var needsRestart = false
     
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5.5"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5.7"
     }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
