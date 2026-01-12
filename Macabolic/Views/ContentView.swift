@@ -239,7 +239,6 @@ struct HomeView: View {
             .controlSize(.large)
             .keyboardShortcut("n", modifiers: .command)
             
-
             HStack(spacing: 40) {
                 StatCard(title: languageService.s("stat_downloading"), count: downloadManager.downloadingCount, color: .blue)
                 StatCard(title: languageService.s("stat_queued"), count: downloadManager.queuedCount, color: .orange)
