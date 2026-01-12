@@ -10,7 +10,7 @@ class YtdlpService: ObservableObject {
     
     private var ytdlpPath: URL?
     private var ffmpegPath: URL?
-    private let localVersion = "1.5.4"
+    private let localVersion = "1.5.5"
     private let bundledYtdlpName = "yt-dlp_macos"
     
     init() {
@@ -253,6 +253,7 @@ class YtdlpService: ObservableObject {
             likeCount: nil,
             formats: nil,
             subtitles: nil,
+            automaticCaptions: nil,
             chapters: nil,
             playlist: info.id, // Playlist olduğunu belirtmek için ID'yi buraya da koyuyoruz
             playlistIndex: nil,

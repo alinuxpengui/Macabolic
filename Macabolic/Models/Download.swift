@@ -281,6 +281,7 @@ struct MediaInfo: Codable {
     let likeCount: Int?
     let formats: [MediaFormat]?
     let subtitles: [String: [SubtitleInfo]]?
+    let automaticCaptions: [String: [SubtitleInfo]]?
     let chapters: [ChapterInfo]?
     let playlist: String?
     let playlistIndex: Int?
@@ -306,6 +307,7 @@ struct MediaInfo: Codable {
     
     enum CodingKeys: String, CodingKey {
         case id, title, description, thumbnail, duration, uploader, formats, subtitles, chapters, playlist
+        case automaticCaptions = "automatic_captions"
         case uploadDate = "upload_date"
         case viewCount = "view_count"
         case likeCount = "like_count"

@@ -21,7 +21,8 @@ struct AddDownloadView: View {
     
 
     @State private var downloadSubtitles: Bool = false
-    @State private var subtitleLanguages: String = "tr,en"
+    @State private var selectedSubtitleLangs: Set<String> = []
+    @State private var availableSubtitles: [SubtitleOption] = []
     @State private var embedSubtitles: Bool = true
     @State private var embedThumbnail: Bool = true
     @State private var embedMetadata: Bool = true
@@ -38,6 +39,11 @@ struct AddDownloadView: View {
 
     enum DownloadMode {
         case single, playlist
+    }
+    
+    struct SubtitleOption: Identifiable, Hashable {
+        let id: String
+        let name: String
     }
 
     var body: some View {
@@ -315,9 +321,39 @@ struct AddDownloadView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Toggle(languageService.s("download_subtitles"), isOn: $downloadSubtitles)
                         if downloadSubtitles {
-                            HStack {
-                                Text(languageService.s("languages"))
-                                TextField("tr,en,de...", text: $subtitleLanguages).textFieldStyle(.roundedBorder).frame(width: 150)
+                            if availableSubtitles.isEmpty {
+                                Text("Altyazı bulunamadı veya bilgi bekleniyor...")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Menu {
+                                    ForEach(availableSubtitles) { sub in
+                                        Button {
+                                            if selectedSubtitleLangs.contains(sub.id) {
+                                                selectedSubtitleLangs.remove(sub.id)
+                                            } else {
+                                                selectedSubtitleLangs.insert(sub.id)
+                                            }
+                                        } label: {
+                                            if selectedSubtitleLangs.contains(sub.id) {
+                                                Label(sub.name, systemImage: "checkmark")
+                                            } else {
+                                                Text(sub.name)
+                                            }
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(languageService.s("languages"))
+                                        Spacer()
+                                        if selectedSubtitleLangs.isEmpty {
+                                            Text(languageService.s("select"))
+                                        } else {
+                                            Text("\(selectedSubtitleLangs.count) dil seçildi")
+                                        }
+                                    }
+                                }
+                                .menuStyle(.borderedButton)
                             }
                             Toggle(languageService.s("embed_video"), isOn: $embedSubtitles)
                         }
@@ -375,6 +411,47 @@ struct AddDownloadView: View {
                 let info = try await downloadManager.ytdlpService.fetchInfo(url: urlInput)
                 mediaInfo = info
                 customFilename = info.title
+                
+                // Altyazıları işle ve listeyi hazırla
+                var subs: [SubtitleOption] = []
+                var foundLangs: Set<String> = []
+                
+                // 1. Manuel altyazılar
+                if let manual = info.subtitles {
+                    for key in manual.keys {
+                        if !foundLangs.contains(key) {
+                            let name = manual[key]?.first?.name ?? key
+                            subs.append(SubtitleOption(id: key, name: "\(name) (\(key))"))
+                            foundLangs.insert(key)
+                        }
+                    }
+                }
+                
+                // 2. Otomatik altyazılar
+                if let auto = info.automaticCaptions {
+                    for key in auto.keys {
+                        if !foundLangs.contains(key) {
+                            let name = auto[key]?.first?.name ?? key
+                            subs.append(SubtitleOption(id: key, name: "\(name) [Auto] (\(key))"))
+                            foundLangs.insert(key)
+                        }
+                    }
+                }
+                
+                subs.sort { $0.name < $1.name }
+                availableSubtitles = subs
+                
+                // Varsayılan dil seçimi (Sistem dili)
+                let systemLang = Locale.current.language.languageCode?.identifier ?? "en"
+                // Tam eşleşme ara (örn: tr)
+                if foundLangs.contains(systemLang) {
+                    selectedSubtitleLangs.insert(systemLang)
+                } 
+                // Yoksa ve sistem dili altyazı listesinde yoksa varsayılan olarak 'en' seç
+                else if foundLangs.contains("en") {
+                    selectedSubtitleLangs.insert("en")
+                }
+                
             } catch { errorMessage = error.localizedDescription }
             isLoading = false
         }
@@ -402,7 +479,7 @@ struct AddDownloadView: View {
             videoResolution: isVideoTab ? videoResolution : nil,
             audioQuality: isVideoTab ? nil : audioQuality,
             downloadSubtitles: isVideoTab ? downloadSubtitles : false,
-            subtitleLanguages: subtitleLanguages.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) },
+            subtitleLanguages: Array(selectedSubtitleLangs),
             embedSubtitles: isVideoTab ? embedSubtitles : false,
             downloadThumbnail: false,
             embedThumbnail: embedThumbnail,

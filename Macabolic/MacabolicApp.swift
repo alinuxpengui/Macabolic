@@ -58,7 +58,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var needsRestart = false
     
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5.4"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5.5"
     }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
@@ -105,19 +105,23 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
         downloadTask.resume()
     }
     
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite totalBytesExpectedToWrite: Int64) {
-        updateProgress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+    nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite totalBytesExpectedToWrite: Int64) {
+        Task { @MainActor in
+            updateProgress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+        }
     }
     
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        isDownloading = false
-        isInstalling = true
-        
+    nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        // Dosyayı geçici konuma taşı (Bu işlem main thread gerektirmez ama property update gerektirir)
         let tempDmg = FileManager.default.temporaryDirectory.appendingPathComponent("Macabolic_Update.dmg")
         try? FileManager.default.removeItem(at: tempDmg)
         try? FileManager.default.moveItem(at: location, to: tempDmg)
         
-        installUpdate(dmgPath: tempDmg.path)
+        Task { @MainActor in
+            isDownloading = false
+            isInstalling = true
+            installUpdate(dmgPath: tempDmg.path)
+        }
     }
     
     private func installUpdate(dmgPath: String) {
@@ -320,8 +324,8 @@ class LanguageService: ObservableObject {
             "extra_settings": "Ekstra Ayarlar",
             "video_url": "Video / Playlist URL",
             "url_hint": "YouTube, Instagram, X (Twitter) video veya oynatma listesi linki...",
-            "whats_new_title": "Macabolic Güncellendi! 🎉",
-            "whats_new_message": "v1.5.2 ile gelen yenilikler:\n• Akıllı Playlist desteği: Artık tüm listeyi veya seçtiğiniz videoları indirebilirsiniz.\n• Playlist URL hataları giderildi.\n• Arayüz iyileştirmeleri yapıldı.",
+            "whats_new_title": "Macabolic %@ Güncellendi! 🎉",
+            "whats_new_message": "v%@ ile gelen yenilikler:\n• Altyazı Seçimi: Artık indirmeden önce videonun desteklediği tüm altyazıları görüp istediklerinizi seçebilirsiniz.\n• Saf Playlist desteği iyileştirildi.\n• Mükerrer indirme parametresi hatası giderildi.",
             "paste_from_clipboard": "Panodan Yapıştır",
             "fetch_info": "Bilgi Al",
             "quality": "Kalite",
@@ -456,8 +460,8 @@ class LanguageService: ObservableObject {
             "extra_settings": "Extra Settings",
             "video_url": "Video / Playlist URL",
             "url_hint": "YouTube, Instagram, X (Twitter) video or playlist link...",
-            "whats_new_title": "Macabolic Updated! 🎉",
-            "whats_new_message": "What's new in v1.5.2:\n• Smart Playlist Support: Download entire lists or select specific videos.\n• Fixed Playlist URL parsing errors.\n• UI improvements and bug fixes.",
+            "whats_new_title": "Macabolic Updated to %@! 🎉",
+            "whats_new_message": "What's new in v%@:\n• Subtitle Selection: You can now view and select specific subtitles before downloading.\n• Improved pure Playlist support.\n• Fixed duplicate download argument issue.",
             "paste_from_clipboard": "Paste from Clipboard",
             "fetch_info": "Get Video Information",
             "quality": "Quality",
