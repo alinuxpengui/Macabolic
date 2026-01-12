@@ -14,6 +14,21 @@ A modern, fast, and beautiful video downloader for macOS. Powered by `yt-dlp`.
 
 Macabolic is a native macOS frontend for the powerful [yt-dlp](https://github.com/yt-dlp/yt-dlp) command-line tool. It allows you to download videos and audio from YouTube and thousands of other supported sites with ease.
 
+## Screenshots 📸
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%"><img src="Screenshots/screenshot-1.png" alt="Home Screen" /></td>
+      <td width="50%"><img src="Screenshots/screenshot-2.png" alt="Download View" /></td>
+    </tr>
+    <tr>
+      <td width="50%"><img src="Screenshots/screenshot-3.png" alt="Preferences" /></td>
+      <td width="50%"><img src="Screenshots/screenshot-4.png" alt="History" /></td>
+    </tr>
+  </table>
+</div>
+
 ## Features ✨
 
 - **Native macOS Experience:** Built with SwiftUI for a seamless look and feel.
