@@ -10,7 +10,7 @@ class YtdlpService: ObservableObject {
     
     private var ytdlpPath: URL?
     private var ffmpegPath: URL?
-    private let localVersion = "1.5.0"
+    private let localVersion = "1.5.1"
     private let bundledYtdlpName = "yt-dlp_macos"
     
     init() {
@@ -173,7 +173,8 @@ class YtdlpService: ObservableObject {
             path.path,
             "--dump-json",
             "--no-playlist",
-            "--no-warnings"
+            "--no-warnings",
+            "--flat-playlist"
         ]
         
         if let credential = credential {

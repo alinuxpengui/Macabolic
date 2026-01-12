@@ -9,6 +9,7 @@ class DownloadManager: ObservableObject {
     @Published var history: [HistoricDownload] = []
     @Published var showDisclaimer: Bool = false
     @Published var ytdlpVersion: String?
+    @Published var showWhatsNew: Bool = false
     
 
     let ytdlpService = YtdlpService()
@@ -49,6 +50,14 @@ class DownloadManager: ObservableObject {
 
         if !userDefaults.bool(forKey: "disclaimerAcknowledged") {
             showDisclaimer = true
+        }
+
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5.1"
+        let lastSeenVersion = userDefaults.string(forKey: "lastSeenVersion") ?? "0.0.0"
+        
+        if currentVersion != lastSeenVersion {
+            showWhatsNew = true
+            userDefaults.set(currentVersion, forKey: "lastSeenVersion")
         }
     }
     

@@ -45,6 +45,11 @@ struct ContentView: View {
         } message: {
             Text(languageService.s("legal_disclaimer_message"))
         }
+        .alert(languageService.s("whats_new_title"), isPresented: $downloadManager.showWhatsNew) {
+            Button(languageService.s("ok")) { }
+        } message: {
+            Text(languageService.s("whats_new_message"))
+        }
         .frame(minWidth: 900, minHeight: 600)
     }
 }
