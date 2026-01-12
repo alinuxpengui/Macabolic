@@ -65,3 +65,11 @@ compile_commands.json
 
 # Setup Files
 inno/*.exe
+
+# Custom Builds & Logs
+build_release/
+build_debug/
+build_log.txt
+dist/
+.DS_Store
+*.dmg
