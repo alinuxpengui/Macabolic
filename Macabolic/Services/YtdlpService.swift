@@ -10,7 +10,7 @@ class YtdlpService: ObservableObject {
     
     private var ytdlpPath: URL?
     private var ffmpegPath: URL?
-    private let localVersion = "1.4.1"
+    private let localVersion = "1.4.2"
     private let bundledYtdlpName = "yt-dlp_macos"
     
     init() {
@@ -242,6 +242,9 @@ class YtdlpService: ObservableObject {
         }
         
         var args = [path.path]
+        // Playlist engelleme
+        args.append("--no-playlist")
+        
         // FFmpeg and Temp location
         let appSupport = getAppSupportDirectory()
         args.append(contentsOf: ["--ffmpeg-location", appSupport.path])
