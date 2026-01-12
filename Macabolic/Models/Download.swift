@@ -301,8 +301,18 @@ struct MediaInfo: Codable {
     }
     
     var thumbnailURL: URL? {
-        guard let thumbnail = thumbnail else { return nil }
-        return URL(string: thumbnail)
+        if let thumbnail = thumbnail, !thumbnail.isEmpty {
+            return URL(string: thumbnail)
+        }
+        
+        // Playlist veya flat-playlist durumunda thumbnail gelmeyebilir.
+        // YouTube video ID'leri genelde 11 karakterdir.
+        // Eğer id 11 karakterse, standart YouTube thumbnail'ini deneyelim.
+        if id.count == 11 {
+            return URL(string: "https://i.ytimg.com/vi/\(id)/mqdefault.jpg")
+        }
+        
+        return nil
     }
     
     enum CodingKeys: String, CodingKey {

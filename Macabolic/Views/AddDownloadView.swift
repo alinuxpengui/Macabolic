@@ -320,9 +320,11 @@ struct AddDownloadView: View {
                 GroupBox(languageService.s("subtitles")) {
                     VStack(alignment: .leading, spacing: 8) {
                         Toggle(languageService.s("download_subtitles"), isOn: $downloadSubtitles)
-                        if downloadSubtitles {
+                            .disabled(availableSubtitles.isEmpty)
+                        
+                        if downloadSubtitles || !availableSubtitles.isEmpty {
                             if availableSubtitles.isEmpty {
-                                Text("Altyazı bulunamadı veya bilgi bekleniyor...")
+                                Text(languageService.s("no_subtitles"))
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             } else {
