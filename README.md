@@ -63,7 +63,10 @@ Macabolic is a native macOS frontend for the powerful [yt-dlp](https://github.co
 
 ## Legal Disclaimer ⚖️
 
+This tool is intended solely for personal use and educational or research purposes.
 Videos on YouTube and other sites may be subject to DMCA protection. The authors of Parabolic/Macabolic do not endorse, and are not responsible for, the use of this application in means that will violate these laws.
+Downloading videos from YouTube may violate their Terms of Service unless the video has an explicit download button or the content is licensed in a way that permits downloading.
+By using this app, you assume full responsibility for any content you download and how you use it. The developer does not condone or support any misuse of this tool to infringe upon copyrights or violate platform rules.
 
 ## License ⚖️
 
