@@ -58,7 +58,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var needsRestart = false
     
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5.9"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.0"
     }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
@@ -326,7 +326,7 @@ class LanguageService: ObservableObject {
             "url_hint": "YouTube, Instagram, X (Twitter) video veya oynatma listesi linki...",
             "no_subtitles": "Altyazı bulunamadı",
             "whats_new_title": "Macabolic %@ Güncellendi! 🎉",
-            "whats_new_message": "v%@ ile gelen yenilikler:\n• Altyazı Seçimi: Artık indirmeden önce videonun desteklediği tüm altyazıları görüp istediklerinizi seçebilirsiniz.\n• Saf Playlist desteği iyileştirildi.\n• Mükerrer indirme parametresi hatası giderildi.",
+            "whats_new_message": "v%@ ile gelen yenilikler:\n• Uygulama sürüm numaralandırma sistemi standartlaştırıldı.",
             "paste_from_clipboard": "Panodan Yapıştır",
             "fetch_info": "Bilgi Al",
             "quality": "Kalite",
@@ -463,7 +463,7 @@ class LanguageService: ObservableObject {
             "url_hint": "YouTube, Instagram, X (Twitter) video or playlist link...",
             "no_subtitles": "No subtitles found",
             "whats_new_title": "Macabolic Updated to %@! 🎉",
-            "whats_new_message": "What's new in v%@:\n• Subtitle Selection: You can now view and select specific subtitles before downloading.\n• Improved pure Playlist support.\n• Fixed duplicate download argument issue.",
+            "whats_new_message": "What's new in v%@:\n• Application versioning system standardized.",
             "paste_from_clipboard": "Paste from Clipboard",
             "fetch_info": "Get Video Information",
             "quality": "Quality",
