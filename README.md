@@ -2,6 +2,8 @@
 
 A modern, fast, and beautiful video downloader for macOS. Powered by `yt-dlp`.
 
+> ⚠️ **Note:** This project is currently under **active development**. You may encounter bugs or incomplete features. If you find any issues, please [open an issue](https://github.com/alinuxpengui/Macabolic/issues) so we can fix them!
+
 <p align="left">
   <img src="Macabolic/Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" width="128" />
   <br>
