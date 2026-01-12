@@ -14,6 +14,9 @@ struct MacabolicApp: App {
                 .environmentObject(appState)
                 .environmentObject(languageService)
                 .environmentObject(updateChecker)
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                    downloadManager.stopAllDownloads()
+                }
         }
         .commands {
             CommandGroup(replacing: .newItem) {
@@ -54,7 +57,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.4.0"
+    private let currentVersion = "1.4.1"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?

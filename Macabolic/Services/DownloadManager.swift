@@ -16,6 +16,7 @@ class DownloadManager: ObservableObject {
 
     private let maxConcurrentDownloads = 3
     private let userDefaults = UserDefaults.standard
+    private var activeProcesses: [UUID: Process] = [:]
     
 
     
@@ -98,6 +99,11 @@ class DownloadManager: ObservableObject {
             let outputPath = try await ytdlpService.download(
                 url: download.url,
                 options: download.options,
+                onProcessCreated: { [weak self] process in
+                    Task { @MainActor in
+                        self?.activeProcesses[download.id] = process
+                    }
+                },
                 onProgress: { progress, speed, eta in
                     download.progress = progress
                     download.speed = speed
@@ -107,6 +113,8 @@ class DownloadManager: ObservableObject {
                     download.log += line + "\n"
                 }
             )
+            
+            activeProcesses.removeValue(forKey: download.id)
             
             download.filePath = outputPath
             download.status = .completed
@@ -125,8 +133,11 @@ class DownloadManager: ObservableObject {
     
 
     func stopDownload(_ download: Download) {
+        if let process = activeProcesses[download.id] {
+            process.terminate()
+            activeProcesses.removeValue(forKey: download.id)
+        }
         download.status = .stopped
-
     }
     
 
@@ -170,6 +181,7 @@ class DownloadManager: ObservableObject {
     
 
     func removeDownload(_ download: Download) {
+        stopDownload(download)
         downloads.removeAll { $0.id == download.id }
     }
     

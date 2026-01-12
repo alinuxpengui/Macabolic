@@ -10,7 +10,7 @@ class YtdlpService: ObservableObject {
     
     private var ytdlpPath: URL?
     private var ffmpegPath: URL?
-    private let localVersion = "1.4.0"
+    private let localVersion = "1.4.1"
     private let bundledYtdlpName = "yt-dlp_macos"
     
     init() {
@@ -233,6 +233,7 @@ class YtdlpService: ObservableObject {
     func download(
         url: String,
         options: DownloadOptions,
+        onProcessCreated: @escaping (Process) -> Void,
         onProgress: @escaping (Double, String?, String?) -> Void,
         onOutput: @escaping (String) -> Void
     ) async throws -> URL {
@@ -310,7 +311,13 @@ class YtdlpService: ObservableObject {
         args.append(url)
         
 
-        let outputPath = try await runDownloadProcess(args: args, saveFolder: options.saveFolder, onProgress: onProgress, onOutput: onOutput)
+        let outputPath = try await runDownloadProcess(
+            args: args,
+            saveFolder: options.saveFolder,
+            onProcessCreated: onProcessCreated,
+            onProgress: onProgress,
+            onOutput: onOutput
+        )
         
         return URL(fileURLWithPath: outputPath)
     }
@@ -403,6 +410,7 @@ class YtdlpService: ObservableObject {
     private func runDownloadProcess(
         args: [String],
         saveFolder: URL,
+        onProcessCreated: @escaping (Process) -> Void,
         onProgress: @escaping (Double, String?, String?) -> Void,
         onOutput: @escaping (String) -> Void
     ) async throws -> String {
@@ -415,7 +423,10 @@ class YtdlpService: ObservableObject {
             process.arguments = args
             process.currentDirectoryURL = saveFolder
             process.standardOutput = outputPipe
+            process.standardOutput = outputPipe
             process.standardError = errorPipe
+            
+            onProcessCreated(process)
             
             var outputPath = ""
             
