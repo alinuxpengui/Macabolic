@@ -10,7 +10,7 @@ class YtdlpService: ObservableObject {
     
     private var ytdlpPath: URL?
     private var ffmpegPath: URL?
-    private let localVersion = "1.3.6"
+    private let localVersion = "1.4.0"
     private let bundledYtdlpName = "yt-dlp_macos"
     
     init() {
@@ -321,7 +321,7 @@ class YtdlpService: ObservableObject {
         var args: [String] = []
         
         if options.fileType.isVideo {
-
+            // Video: Video + Audio
             var formatStr = ""
             if let resolution = options.videoResolution {
                 formatStr = "\(resolution.ytdlpValue)+bestaudio"
@@ -333,9 +333,16 @@ class YtdlpService: ObservableObject {
             args.append(contentsOf: ["-f", formatStr])
             args.append(contentsOf: ["--merge-output-format", options.fileType.fileExtension])
         } else {
-
+            // Audio Only: Use -f ba (best audio) to avoid downloading video stream
+            // and use -x to extract/convert to desired format
+            args.append(contentsOf: ["-f", "ba/best"])
             args.append(contentsOf: ["-x", "--audio-format", options.fileType.fileExtension])
-            args.append(contentsOf: ["--audio-quality", "0"])
+            
+            if let quality = options.audioQuality {
+                args.append(contentsOf: ["--audio-quality", quality.ytdlpValue])
+            } else {
+                args.append(contentsOf: ["--audio-quality", "0"]) // Best quality by default
+            }
         }
         
         return args

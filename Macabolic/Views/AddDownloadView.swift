@@ -15,7 +15,9 @@ struct AddDownloadView: View {
     @State private var saveFolder: URL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
     @State private var fileType: MediaFileType = .mp4
     @State private var videoResolution: VideoResolution = .best
+    @State private var audioQuality: AudioQuality = .best
     @State private var customFilename: String = ""
+    @State private var isVideoTab: Bool = true
     
 
     @State private var downloadSubtitles: Bool = false
@@ -208,19 +210,47 @@ struct AddDownloadView: View {
             Text(languageService.s("format"))
                 .font(.headline)
             
+            Picker("", selection: $isVideoTab) {
+                Text(languageService.s("video")).tag(true)
+                Text(languageService.s("audio")).tag(false)
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: isVideoTab) { isVideo in
+                // Switch default file type when tab changes
+                if isVideo {
+                    fileType = .mp4
+                } else {
+                    fileType = .mp3
+                }
+            }
+            
             HStack(spacing: 24) {
                 Picker(languageService.s("file_type"), selection: $fileType) {
-                    ForEach(MediaFileType.allCases) { type in
-                        Text(type.rawValue).tag(type)
+                    if isVideoTab {
+                        ForEach(MediaFileType.videoTypes) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    } else {
+                        ForEach(MediaFileType.audioTypes) { type in
+                            Text(type.rawValue).tag(type)
+                        }
                     }
                 }
                 .pickerStyle(.menu)
                 .frame(minWidth: 200, alignment: .leading)
                 
-                if fileType.isVideo {
+                if isVideoTab {
                     Picker(languageService.s("quality"), selection: $videoResolution) {
                         ForEach(VideoResolution.allCases) { res in
                             Text(res.title(lang: languageService)).tag(res)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(minWidth: 220, alignment: .leading)
+                } else {
+                    Picker(languageService.s("audio_quality"), selection: $audioQuality) {
+                        ForEach(AudioQuality.allCases) { quality in
+                            Text(quality.title(lang: languageService)).tag(quality)
                         }
                     }
                     .pickerStyle(.menu)
@@ -257,24 +287,24 @@ struct AddDownloadView: View {
     private var extraOptionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            GroupBox(languageService.s("subtitles")) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Toggle(languageService.s("download_subtitles"), isOn: $downloadSubtitles)
-                    
-                    if downloadSubtitles {
-                        HStack {
-                            Text(languageService.s("languages"))
-                            TextField("tr,en,de...", text: $subtitleLanguages)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 150)
-                        }
+            if isVideoTab {
+                GroupBox(languageService.s("subtitles")) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle(languageService.s("download_subtitles"), isOn: $downloadSubtitles)
                         
-                        if fileType.isVideo {
+                        if downloadSubtitles {
+                            HStack {
+                                Text(languageService.s("languages"))
+                                TextField("tr,en,de...", text: $subtitleLanguages)
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 150)
+                            }
+                            
                             Toggle(languageService.s("embed_video"), isOn: $embedSubtitles)
                         }
                     }
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
             }
             
 
@@ -358,10 +388,11 @@ struct AddDownloadView: View {
         let options = DownloadOptions(
             saveFolder: saveFolder,
             fileType: fileType,
-            videoResolution: fileType.isVideo ? videoResolution : nil,
-            downloadSubtitles: downloadSubtitles,
+            videoResolution: isVideoTab ? videoResolution : nil,
+            audioQuality: isVideoTab ? nil : audioQuality,
+            downloadSubtitles: isVideoTab ? downloadSubtitles : false,
             subtitleLanguages: subtitleLanguages.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) },
-            embedSubtitles: embedSubtitles,
+            embedSubtitles: isVideoTab ? embedSubtitles : false,
             downloadThumbnail: false,
             embedThumbnail: embedThumbnail,
             embedMetadata: embedMetadata,

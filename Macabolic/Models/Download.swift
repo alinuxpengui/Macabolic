@@ -81,6 +81,7 @@ struct DownloadOptions: Codable {
     var videoFormat: VideoFormat?
     var audioFormat: AudioFormat?
     var videoResolution: VideoResolution?
+    var audioQuality: AudioQuality?
     var downloadSubtitles: Bool
     var subtitleLanguages: [String]
     var embedSubtitles: Bool
@@ -136,6 +137,42 @@ enum MediaFileType: String, Codable, CaseIterable, Identifiable {
     
     var fileExtension: String {
         rawValue.lowercased()
+    }
+    
+    static var videoTypes: [MediaFileType] {
+        [.mp4, .webm, .mkv]
+    }
+    
+    static var audioTypes: [MediaFileType] {
+        [.mp3, .opus, .flac, .wav, .m4a]
+    }
+}
+
+
+enum AudioQuality: String, Codable, CaseIterable, Identifiable {
+    case best
+    case q320 = "320kbps"
+    case q256 = "256kbps"
+    case q192 = "192kbps"
+    case q128 = "128kbps"
+    
+    var id: String { rawValue }
+    
+    func title(lang: LanguageService) -> String {
+        switch self {
+        case .best: return lang.s("res_best")
+        default: return rawValue
+        }
+    }
+    
+    var ytdlpValue: String {
+        switch self {
+        case .best: return "0"
+        case .q320: return "320K"
+        case .q256: return "256K"
+        case .q192: return "192K"
+        case .q128: return "128K"
+        }
     }
 }
 

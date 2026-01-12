@@ -54,7 +54,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
-    private let currentVersion = "1.3.6"
+    private let currentVersion = "1.4.0"
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
@@ -302,6 +302,7 @@ class LanguageService: ObservableObject {
             "empty_completed": "Tamamlandı indirme yok",
             "video": "Video",
             "audio": "Ses",
+            "audio_quality": "Ses Kalitesi",
             "default_video_resolution": "Varsayılan Video Çözünürlüğü",
             "sponsorblock": "SponsorBlock",
             "app_updates": "Uygulama Güncellemesi",
@@ -428,6 +429,7 @@ class LanguageService: ObservableObject {
             "empty_completed": "No completed downloads",
             "video": "Video",
             "audio": "Audio",
+            "audio_quality": "Audio Quality",
             "default_video_resolution": "Default Video Resolution",
             "sponsorblock": "SponsorBlock",
             "app_updates": "App Updates",
