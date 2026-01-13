@@ -13,8 +13,13 @@ A modern, fast, and beautiful video downloader for macOS. Powered by `yt-dlp`.
     <a href="https://github.com/alinuxpengui/Macabolic/releases">
       <img src="https://img.shields.io/github/downloads/alinuxpengui/Macabolic/total?style=for-the-badge&color=818cf8" alt="Total Downloads" />
     </a>
+  </p>
+  <p>
     <a href="https://mastodon.social/@macabolic_app">
       <img src="https://img.shields.io/badge/Follow-Mastodon-2b90d9?style=for-the-badge&logo=mastodon&logoColor=white" alt="Follow on Mastodon" />
+    </a>
+    <a href="https://bsky.app/profile/macabolicapp.bsky.social">
+      <img src="https://img.shields.io/badge/Follow-Bluesky-0085ff?style=for-the-badge&logo=bluesky&logoColor=white" alt="Follow on Bluesky" />
     </a>
     <a href="https://x.com/macabolic_app">
       <img src="https://img.shields.io/badge/Follow-X-black?style=for-the-badge&logo=x&logoColor=white" alt="Follow on X" />
