@@ -140,7 +140,7 @@ class YtdlpService: ObservableObject {
     }
 
     func downloadFfprobe() async {
-        let ffprobeURL = URL(string: "https://evermeet.cx/ffprobe/get/zip")!
+        let ffprobeURL = URL(string: "https://evermeet.cx/ffmpeg/get/ffprobe/zip")!
         let appSupport = getAppSupportDirectory()
         let destinationZip = appSupport.appendingPathComponent("ffprobe.zip")
         let ffprobeDest = appSupport.appendingPathComponent("ffprobe")
@@ -340,8 +340,7 @@ class YtdlpService: ObservableObject {
         
         // FFmpeg and Temp location
         let appSupport = getAppSupportDirectory()
-        let ffmpegPath = appSupport.appendingPathComponent("ffmpeg").path
-        args.append(contentsOf: ["--ffmpeg-location", ffmpegPath])
+        args.append(contentsOf: ["--ffmpeg-location", appSupport.path])
         args.append(contentsOf: ["--paths", "temp:/tmp"])
         
         // Output template

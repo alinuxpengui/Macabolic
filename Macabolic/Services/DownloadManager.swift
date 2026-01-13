@@ -52,7 +52,7 @@ class DownloadManager: ObservableObject {
             showDisclaimer = true
         }
 
-        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.0"
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.1"
         let lastSeenVersion = userDefaults.string(forKey: "lastSeenVersion") ?? "0.0.0"
         
         if currentVersion != lastSeenVersion {

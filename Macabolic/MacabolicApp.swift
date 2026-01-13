@@ -82,7 +82,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }
 
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.1"
     }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
@@ -368,7 +368,7 @@ class LanguageService: ObservableObject {
             "url_hint": "YouTube, Instagram, X (Twitter) video veya oynatma listesi linki...",
             "no_subtitles": "Altyazı bulunamadı",
             "whats_new_title": "Macabolic %@ Güncellendi! 🎉",
-            "whats_new_message": "v%@ ile gelen yenilikler:\n• Intel işlemcili Mac'ler için destek eklendi (Universal Build).\n• İlk açılışta dil seçimi ve karşılama ekranı eklendi.\n• Sürüm Yönetimi: Ayarlar'dan eski sürümlere dönme veya sürüm seçme desteği eklendi.\n• Yeni altyazı menüsü: Dahili ve Otomatik altyazılar ayrıldı.\n• Altyazı indirme ve videoya gömme hataları giderildi.\n• Çeşitli hata düzeltmeleri ve performans iyileştirmeleri.",
+            "whats_new_message": "v%@ ile gelen yenilikler:\n• MKV ve diğer formatlardaki ses/altyazı birleştirme hataları (ffprobe) giderildi.\n• Sürüm Yönetimi: Ayarlar'dan eski sürümlere dönme desteği eklendi.\n• Yeni altyazı menüsü: Dahili ve Otomatik altyazılar ayrıldı.\n• Çeşitli hata düzeltmeleri ve performans iyileştirmeleri.",
             "paste_from_clipboard": "Panodan Yapıştır",
             "fetch_info": "Bilgi Al",
             "quality": "Kalite",
@@ -514,7 +514,7 @@ class LanguageService: ObservableObject {
             "url_hint": "YouTube, Instagram, X (Twitter) video or playlist link...",
             "no_subtitles": "No subtitles found",
             "whats_new_title": "Macabolic Updated to %@! 🎉",
-            "whats_new_message": "What's new in v%@:\n• Added support for Intel-based Macs (Universal Build).\n• Added welcome screen and language selection on first launch.\n• Version Management: Added support for rolling back or selecting specific versions from Settings.\n• New subtitle menu: Grouped Internal and Auto-generated subtitles.\n• Fixed subtitle downloading and embedding issues.\n• Various bug fixes and performance improvements.",
+            "whats_new_message": "What's new in v%@:\n• Fixed merging issues (ffprobe) for MKV and other formats.\n• Version Management: Added support for rolling back to specific versions from Settings.\n• New subtitle menu: Grouped Internal and Auto-generated subtitles.\n• Various bug fixes and performance improvements.",
             "paste_from_clipboard": "Paste from Clipboard",
             "fetch_info": "Get Video Information",
             "quality": "Quality",

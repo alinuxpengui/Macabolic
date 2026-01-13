@@ -49,10 +49,10 @@ struct ContentView: View {
         } message: {
             Text(languageService.s("legal_disclaimer_message"))
         }
-        .alert(String(format: languageService.s("whats_new_title"), Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.0"), isPresented: $downloadManager.showWhatsNew) {
+        .alert(String(format: languageService.s("whats_new_title"), Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.1"), isPresented: $downloadManager.showWhatsNew) {
             Button(languageService.s("ok")) { }
         } message: {
-            Text(String(format: languageService.s("whats_new_message"), Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.0"))
+            Text(String(format: languageService.s("whats_new_message"), Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.1"))
         }
         .frame(minWidth: 900, minHeight: 600)
     }
