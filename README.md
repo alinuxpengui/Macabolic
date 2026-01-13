@@ -33,6 +33,29 @@ Macabolic is a native macOS frontend for the powerful [yt-dlp](https://github.co
   </table>
 </div>
 
+---
+
+## Support My Journey ❤️
+
+It’s about the motivation of knowing my work truly helped someone and made their life a little easier. Your support is what keeps me building and improving these tools for everyone.
+
+### 🏆 The "First 5" Wall of Fame
+To show my gratitude, the **first 5 sponsors** of any amount will be **permanently featured** in the "About" section of the Macabolic app. Your name will be part of the app's history forever!
+
+[👉 Become a Sponsor on GitHub](https://github.com/sponsors/alinuxpengui)
+
+---
+
+## Roadmap 🗺️
+
+Here is what I'm planning to bring to Macabolic in the near future:
+
+- [ ] **Official Apple Notarization:** Removing the "Unidentified Developer" warning for a professional experience.
+- [ ] **Browser Extensions:** One-click download directly from Safari, Chrome, and Firefox.
+- [ ] **Custom Post-Processing:** More tools to trim, convert, and manage your downloaded files.
+
+---
+
 ## Features ✨
 
 - **Native macOS Experience:** Built with SwiftUI for a seamless look and feel.
