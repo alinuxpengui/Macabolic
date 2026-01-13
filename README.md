@@ -4,16 +4,17 @@ A modern, fast, and beautiful video downloader for macOS. Powered by `yt-dlp`.
 
 > ⚠️ **Note:** This project is currently under **active development**. You may encounter bugs or incomplete features. If you find any issues, please [open an issue](https://github.com/alinuxpengui/Macabolic/issues) so we can fix them!
 
-<p align="left">
+<div align="center">
   <img src="Macabolic/Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" width="128" />
-  <br>
-  <a href="https://github.com/alinuxpengui/Macabolic/releases/latest/download/Macabolic_v2.1.1.dmg">
-    <img src="https://img.shields.io/badge/Download-macOS-blue?style=for-the-badge&logo=apple&logoColor=white" alt="Download Macabolic for macOS" />
-  </a>
-  <a href="https://github.com/alinuxpengui/Macabolic/releases">
-    <img src="https://img.shields.io/github/downloads/alinuxpengui/Macabolic/total?style=for-the-badge&color=818cf8" alt="Total Downloads" />
-  </a>
-</p>
+  <p>
+    <a href="https://github.com/alinuxpengui/Macabolic/releases/latest/download/Macabolic_v2.1.1.dmg">
+      <img src="https://img.shields.io/badge/Download-macOS-blue?style=for-the-badge&logo=apple&logoColor=white" alt="Download Macabolic for macOS" />
+    </a>
+    <a href="https://github.com/alinuxpengui/Macabolic/releases">
+      <img src="https://img.shields.io/github/downloads/alinuxpengui/Macabolic/total?style=for-the-badge&color=818cf8" alt="Total Downloads" />
+    </a>
+  </p>
+</div>
 
 Macabolic is a native macOS frontend for the powerful [yt-dlp](https://github.com/yt-dlp/yt-dlp) command-line tool. It allows you to download videos and audio from YouTube and thousands of other supported sites with ease.
 
