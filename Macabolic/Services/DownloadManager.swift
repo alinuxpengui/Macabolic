@@ -41,7 +41,7 @@ class DownloadManager: ObservableObject {
     
     func initialize() async {
 
-        await ytdlpService.findYtdlp()
+        await ytdlpService.setupBinaries()
         ytdlpVersion = ytdlpService.version
         
 
@@ -52,7 +52,7 @@ class DownloadManager: ObservableObject {
             showDisclaimer = true
         }
 
-        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5.5"
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.0"
         let lastSeenVersion = userDefaults.string(forKey: "lastSeenVersion") ?? "0.0.0"
         
         if currentVersion != lastSeenVersion {

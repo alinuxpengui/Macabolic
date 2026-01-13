@@ -44,6 +44,7 @@ struct AddDownloadView: View {
     struct SubtitleOption: Identifiable, Hashable {
         let id: String
         let name: String
+        let isAuto: Bool
     }
 
     var body: some View {
@@ -328,29 +329,51 @@ struct AddDownloadView: View {
                                 .foregroundColor(.secondary)
                         } else if downloadSubtitles {
                                 Menu {
-                                    ForEach(availableSubtitles) { sub in
-                                        Button {
-                                            if selectedSubtitleLangs.contains(sub.id) {
-                                                selectedSubtitleLangs.remove(sub.id)
-                                            } else {
-                                                selectedSubtitleLangs.insert(sub.id)
-                                            }
-                                        } label: {
-                                            if selectedSubtitleLangs.contains(sub.id) {
-                                                Label(sub.name, systemImage: "checkmark")
-                                            } else {
-                                                Text(sub.name)
+                                    let manualSubs = availableSubtitles.filter { !$0.isAuto }.sorted(by: { $0.name < $1.name })
+                                    let autoSubs = availableSubtitles.filter { $0.isAuto }.sorted(by: { $0.name < $1.name })
+                                    
+                                    if !manualSubs.isEmpty {
+                                        Section(header: Text(languageService.s("internal"))) {
+                                            ForEach(manualSubs) { sub in
+                                                Button {
+                                                    toggleSubtitle(sub.id)
+                                                } label: {
+                                                    HStack {
+                                                        if selectedSubtitleLangs.contains(sub.id) {
+                                                            Image(systemName: "checkmark")
+                                                        }
+                                                        Text(sub.name)
+                                                    }
+                                                }
                                             }
                                         }
                                     }
-                                } label: {
+                                    
+                                    if !autoSubs.isEmpty {
+                                        Section(header: Text(languageService.s("auto_subs"))) {
+                                            ForEach(autoSubs) { sub in
+                                                Button {
+                                                    toggleSubtitle(sub.id)
+                                                } label: {
+                                                    HStack {
+                                                        if selectedSubtitleLangs.contains(sub.id) {
+                                                            Image(systemName: "checkmark")
+                                                        }
+                                                        Text("\(sub.name) [Auto]")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+ label: {
                                     HStack {
                                         Text(languageService.s("languages"))
                                         Spacer()
                                         if selectedSubtitleLangs.isEmpty {
                                             Text(languageService.s("select"))
                                         } else {
-                                            Text("\(selectedSubtitleLangs.count) dil seçildi")
+                                            Text(String(format: languageService.s("subtitles_selected"), selectedSubtitleLangs.count))
                                         }
                                     }
                                 }
@@ -421,7 +444,7 @@ struct AddDownloadView: View {
                     for key in manual.keys {
                         if !foundLangs.contains(key) {
                             let name = manual[key]?.first?.name ?? key
-                            subs.append(SubtitleOption(id: key, name: "\(name) (\(key))"))
+                            subs.append(SubtitleOption(id: key, name: name, isAuto: false))
                             foundLangs.insert(key)
                         }
                     }
@@ -432,25 +455,15 @@ struct AddDownloadView: View {
                     for key in auto.keys {
                         if !foundLangs.contains(key) {
                             let name = auto[key]?.first?.name ?? key
-                            subs.append(SubtitleOption(id: key, name: "\(name) [Auto] (\(key))"))
+                            subs.append(SubtitleOption(id: key, name: name, isAuto: true))
                             foundLangs.insert(key)
                         }
                     }
                 }
                 
-                subs.sort { $0.name < $1.name }
                 availableSubtitles = subs
-                
-                // Varsayılan dil seçimi (Sistem dili)
-                let systemLang = Locale.current.language.languageCode?.identifier ?? "en"
-                // Tam eşleşme ara (örn: tr)
-                if foundLangs.contains(systemLang) {
-                    selectedSubtitleLangs.insert(systemLang)
-                } 
-                // Yoksa ve sistem dili altyazı listesinde yoksa varsayılan olarak 'en' seç
-                else if foundLangs.contains("en") {
-                    selectedSubtitleLangs.insert("en")
-                }
+                // No default selection as requested
+                selectedSubtitleLangs.removeAll()
                 
             } catch { errorMessage = error.localizedDescription }
             isLoading = false
@@ -512,6 +525,14 @@ struct AddDownloadView: View {
         panel.canCreateDirectories = true
         panel.prompt = "Seç"
         if panel.runModal() == .OK, let url = panel.url { saveFolder = url }
+    }
+    
+    private func toggleSubtitle(_ id: String) {
+        if selectedSubtitleLangs.contains(id) {
+            selectedSubtitleLangs.remove(id)
+        } else {
+            selectedSubtitleLangs.insert(id)
+        }
     }
     
     private func formatNumber(_ number: Int) -> String {

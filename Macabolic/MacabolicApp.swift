@@ -57,13 +57,50 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var isInstalling = false
     @Published var needsRestart = false
     
+    @Published var availableReleases: [GitHubRelease] = []
+    
+    struct GitHubRelease: Codable, Identifiable {
+        let id: Int
+        let tagName: String
+        let assets: [GitHubAsset]
+        var idString: String { tagName.replacingOccurrences(of: "v", with: "") }
+        
+        enum CodingKeys: String, CodingKey {
+            case id
+            case tagName = "tag_name"
+            case assets
+        }
+    }
+
+    struct GitHubAsset: Codable {
+        let name: String
+        let browserDownloadURL: String
+        enum CodingKeys: String, CodingKey {
+            case name
+            case browserDownloadURL = "browser_download_url"
+        }
+    }
+
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.0"
     }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
     private var downloadURL: URL?
     
+    func fetchAllReleases() async {
+        let url = URL(string: "https://api.github.com/repos/\(repoOwner)/\(repoName)/releases")!
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
+            // Filtrele: v1.0.0 hariç
+            DispatchQueue.main.async {
+                self.availableReleases = releases.filter { $0.tagName != "v1.0.0" }
+            }
+        } catch {
+            print("Releases fetch error: \(error)")
+        }
+    }
     func checkForUpdates() async {
         isChecking = true
         let url = URL(string: "https://api.github.com/repos/\(repoOwner)/\(repoName)/releases/latest")!
@@ -95,6 +132,14 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
         isChecking = false
     }
     
+    func installSpecificRelease(_ release: GitHubRelease) async {
+        guard let dlpAsset = release.assets.first(where: { $0.name.hasSuffix(".dmg") }),
+              let url = URL(string: dlpAsset.browserDownloadURL) else { return }
+        
+        downloadURL = url
+        await downloadAndInstallUpdate()
+    }
+
     func downloadAndInstallUpdate() async {
         guard let url = downloadURL else { return }
         isDownloading = true
@@ -241,16 +286,13 @@ enum Language: String, CaseIterable, Identifiable {
 
 class LanguageService: ObservableObject {
     @AppStorage("selectedLanguage") var selectedLanguage: Language = .english
+    @AppStorage("isFirstLaunch") var isFirstLaunch: Bool = true
     
     init() {
-
+        // If it's the very first time the app is opened, default to English.
+        // If the user already has a saved preference, @AppStorage will handle it.
         if UserDefaults.standard.object(forKey: "selectedLanguage") == nil {
-            let systemLang = Locale.current.language.languageCode?.identifier ?? "en"
-            if systemLang == "tr" {
-                self.selectedLanguage = .turkish
-            } else {
-                self.selectedLanguage = .english
-            }
+            self.selectedLanguage = .english
         }
     }
     
@@ -326,14 +368,20 @@ class LanguageService: ObservableObject {
             "url_hint": "YouTube, Instagram, X (Twitter) video veya oynatma listesi linki...",
             "no_subtitles": "Altyazı bulunamadı",
             "whats_new_title": "Macabolic %@ Güncellendi! 🎉",
-            "whats_new_message": "v%@ ile gelen yenilikler:\n• Uygulama sürüm numaralandırma sistemi standartlaştırıldı.",
+            "whats_new_message": "v%@ ile gelen yenilikler:\n• Intel işlemcili Mac'ler için destek eklendi (Universal Build).\n• İlk açılışta dil seçimi ve karşılama ekranı eklendi.\n• Sürüm Yönetimi: Ayarlar'dan eski sürümlere dönme veya sürüm seçme desteği eklendi.\n• Yeni altyazı menüsü: Dahili ve Otomatik altyazılar ayrıldı.\n• Altyazı indirme ve videoya gömme hataları giderildi.\n• Çeşitli hata düzeltmeleri ve performans iyileştirmeleri.",
             "paste_from_clipboard": "Panodan Yapıştır",
             "fetch_info": "Bilgi Al",
             "quality": "Kalite",
             "custom_filename_hint": "Dosya adı (boş bırakılırsa video başlığı kullanılır)",
             "subtitles": "Altyazılar",
             "download_subtitles": "Altyazıları indir",
+            "subtitles_selected": "%d dil seçildi",
             "languages": "Diller:",
+            "all_versions": "Tüm Sürümler",
+            "select_version": "Sürüm Seç...",
+            "install": "Kur",
+            "internal": "Dahili",
+            "auto_subs": "Otomatik (Auto)",
             "embed_video": "Videoya göm",
             "embedded_data": "Gömülü Veriler",
             "metadata_desc": "Metadata göm (başlık, sanatçı vb.)",
@@ -393,8 +441,11 @@ class LanguageService: ObservableObject {
             "restart": "Yeniden Başlat",
             "update_ready_title": "Güncelleme Kuruldu",
             "update_ready_message": "Yeni sürüm başarıyla kuruldu. Değişikliklerin etkili olması için lütfen önce bu pencereyi kapatın, ardından önce kırmızı butonla ayarları kapatın, ardından 'Command + Q' ile uygulamadan tamamen çıkıp tekrar başlatın.",
-            "legal_disclaimer_title": "Yasal Uyarı",
-            "legal_disclaimer_message": "YouTube ve diğer sitelerdeki videolar DMCA (Telif Hakkı) korumasına tabi olabilir. Macabolic geliştiricileri, bu uygulamanın yasaları ihlal eden şekilde kullanılmasını onaylamaz ve bundan sorumlu değildir."
+            "legal_disclaimer_title": "Yasal Uyarı & Kullanım Şartları",
+            "legal_disclaimer_message": "YouTube ve diğer sitelerdeki videolar DMCA (Telif Hakkı) korumasına tabi olabilir. Macabolic geliştiricileri, bu uygulamanın yasaları ihlal eden şekilde kullanılmasını onaylamaz ve bundan sorumlu değildir.\n\nBu araç yalnızca kişisel kullanım, eğitim veya araştırma amaçlıdır. YouTube videolarını indirmek, videoda açık bir indirme butonu yoksa veya içerik indirmeye izin veren bir lisansa sahip değilse, Hizmet Şartlarını ihlal edebilir.\n\nBu uygulamayı kullanarak, indirdiğiniz tüm içeriklerin ve bunları nasıl kullandığınızın tüm sorumluluğunu üstlenmiş olursunuz. Geliştirici, bu aracın telif haklarını çiğnemek veya platform kurallarını ihlal etmek amacıyla kötüye kullanılmasını uygun görmez veya desteklemez.",
+            "welcome_title": "Macabolic'e Hoş Geldiniz",
+            "select_language": "Lütfen tercih ettiğiniz dili seçin:",
+            "start_using": "Kullanmaya Başla"
         ],
         .english: [
             "home": "Home",
@@ -463,14 +514,20 @@ class LanguageService: ObservableObject {
             "url_hint": "YouTube, Instagram, X (Twitter) video or playlist link...",
             "no_subtitles": "No subtitles found",
             "whats_new_title": "Macabolic Updated to %@! 🎉",
-            "whats_new_message": "What's new in v%@:\n• Application versioning system standardized.",
+            "whats_new_message": "What's new in v%@:\n• Added support for Intel-based Macs (Universal Build).\n• Added welcome screen and language selection on first launch.\n• Version Management: Added support for rolling back or selecting specific versions from Settings.\n• New subtitle menu: Grouped Internal and Auto-generated subtitles.\n• Fixed subtitle downloading and embedding issues.\n• Various bug fixes and performance improvements.",
             "paste_from_clipboard": "Paste from Clipboard",
             "fetch_info": "Get Video Information",
             "quality": "Quality",
             "custom_filename_hint": "Custom Filename (optional)",
             "subtitles": "Subtitles",
             "download_subtitles": "Download Subtitles",
+            "subtitles_selected": "%d languages selected",
             "languages": "Languages:",
+            "all_versions": "All Versions",
+            "select_version": "Select Version...",
+            "install": "Install",
+            "internal": "Internal",
+            "auto_subs": "Auto-generated",
             "embed_video": "Embed into Video",
             "embedded_data": "Embedded Data",
             "metadata_desc": "Embed Metadata (Title, Artist, etc.)",
@@ -531,7 +588,75 @@ class LanguageService: ObservableObject {
             "update_ready_title": "Update Installed",
             "update_ready_message": "The new version has been installed successfully. To apply the changes, please close this window first, then close the settings with the red button, and finally quit the app completely with 'Command + Q' and restart it.",
             "legal_disclaimer_title": "Legal Copyright Disclaimer",
-            "legal_disclaimer_message": "Videos on YouTube and other sites may be subject to DMCA protection. The authors of Parabolic do not endorse, and are not responsible for, the use of this application in means that will violate these laws."
+            "legal_disclaimer_message": "Videos on YouTube and other sites may be subject to DMCA protection. The authors of Macabolic do not endorse, and are not responsible for, the use of this application in means that will violate these laws.\n\nThis tool is intended solely for personal use and educational or research purposes. Downloading videos from YouTube may violate their Terms of Service unless the video has an explicit download button or the content is licensed in a way that permits downloading.\n\nBy using this app, you assume full responsibility for any content you download and how you use it. The developer does not condone or support any misuse of this tool to infringe upon copyrights or violate platform rules.",
+            "welcome_title": "Welcome to Macabolic",
+            "select_language": "Please select your preferred language:",
+            "start_using": "Get Started"
         ]
     ]
+}
+struct WelcomeView: View {
+    @EnvironmentObject var languageService: LanguageService
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        VStack(spacing: 30) {
+            VStack(spacing: 15) {
+                Image(systemName: "hand.wave.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.accentColor)
+                
+                Text(languageService.s("welcome_title"))
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+            }
+            
+            VStack(alignment: .leading, spacing: 10) {
+                Text(languageService.s("select_language"))
+                    .font(.headline)
+                
+                Picker("", selection: $languageService.selectedLanguage) {
+                    ForEach(Language.allCases) { lang in
+                        Text(lang.displayName).tag(lang)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+            .padding(.horizontal, 40)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text(languageService.s("legal_disclaimer_title"))
+                    .font(.headline)
+                
+                ScrollView {
+                    Text(languageService.s("legal_disclaimer_message"))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxHeight: 200)
+                .padding(10)
+                .background(Color.secondary.opacity(0.1))
+                .cornerRadius(8)
+            }
+            .padding(.horizontal, 40)
+            
+            Button {
+                UserDefaults.standard.set(true, forKey: "disclaimerAcknowledged")
+                languageService.isFirstLaunch = false
+                dismiss()
+            } label: {
+                Text(languageService.s("start_using"))
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .padding(.horizontal, 40)
+        }
+        .padding(.vertical, 40)
+        .frame(width: 500)
+    }
 }

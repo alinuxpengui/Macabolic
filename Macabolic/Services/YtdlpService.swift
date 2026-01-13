@@ -95,17 +95,21 @@ class YtdlpService: ObservableObject {
     func findFfmpeg() async {
         let appSupport = getAppSupportDirectory()
         let ffmpegInSupport = appSupport.appendingPathComponent("ffmpeg")
+        let ffprobeInSupport = appSupport.appendingPathComponent("ffprobe")
         
         if FileManager.default.fileExists(atPath: ffmpegInSupport.path) {
             ffmpegPath = ffmpegInSupport
-            return
         }
         
-        await downloadFfmpeg()
+        // If either is missing, download both
+        if !FileManager.default.fileExists(atPath: ffmpegInSupport.path) || 
+           !FileManager.default.fileExists(atPath: ffprobeInSupport.path) {
+            await downloadFfmpeg()
+            await downloadFfprobe()
+        }
     }
 
     func downloadFfmpeg() async {
-
         let ffmpegURL = URL(string: "https://evermeet.cx/ffmpeg/get/zip")!
         let appSupport = getAppSupportDirectory()
         let destinationZip = appSupport.appendingPathComponent("ffmpeg.zip")
@@ -113,33 +117,54 @@ class YtdlpService: ObservableObject {
         
         do {
             try FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
-            print("FFmpeg indiriliyor...")
             let (tempURL, _) = try await URLSession.shared.download(from: ffmpegURL)
-            
             if FileManager.default.fileExists(atPath: destinationZip.path) {
                 try FileManager.default.removeItem(at: destinationZip)
             }
             try FileManager.default.moveItem(at: tempURL, to: destinationZip)
             
-
             let unzipProcess = Process()
             unzipProcess.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
             unzipProcess.arguments = ["-o", destinationZip.path, "-d", appSupport.path]
             try unzipProcess.run()
             unzipProcess.waitUntilExit()
             
-
             if FileManager.default.fileExists(atPath: ffmpegDest.path) {
                 try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: ffmpegDest.path)
                 ffmpegPath = ffmpegDest
-                print("FFmpeg başarıyla yüklendi.")
             }
-            
-
             try? FileManager.default.removeItem(at: destinationZip)
-            
         } catch {
             print("FFmpeg indirme hatası: \(error)")
+        }
+    }
+
+    func downloadFfprobe() async {
+        let ffprobeURL = URL(string: "https://evermeet.cx/ffprobe/get/zip")!
+        let appSupport = getAppSupportDirectory()
+        let destinationZip = appSupport.appendingPathComponent("ffprobe.zip")
+        let ffprobeDest = appSupport.appendingPathComponent("ffprobe")
+        
+        do {
+            try FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
+            let (tempURL, _) = try await URLSession.shared.download(from: ffprobeURL)
+            if FileManager.default.fileExists(atPath: destinationZip.path) {
+                try FileManager.default.removeItem(at: destinationZip)
+            }
+            try FileManager.default.moveItem(at: tempURL, to: destinationZip)
+            
+            let unzipProcess = Process()
+            unzipProcess.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+            unzipProcess.arguments = ["-o", destinationZip.path, "-d", appSupport.path]
+            try unzipProcess.run()
+            unzipProcess.waitUntilExit()
+            
+            if FileManager.default.fileExists(atPath: ffprobeDest.path) {
+                try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: ffprobeDest.path)
+            }
+            try? FileManager.default.removeItem(at: destinationZip)
+        } catch {
+            print("FFprobe indirme hatası: \(error)")
         }
     }
     
@@ -315,7 +340,8 @@ class YtdlpService: ObservableObject {
         
         // FFmpeg and Temp location
         let appSupport = getAppSupportDirectory()
-        args.append(contentsOf: ["--ffmpeg-location", appSupport.path])
+        let ffmpegPath = appSupport.appendingPathComponent("ffmpeg").path
+        args.append(contentsOf: ["--ffmpeg-location", ffmpegPath])
         args.append(contentsOf: ["--paths", "temp:/tmp"])
         
         // Output template
@@ -331,11 +357,10 @@ class YtdlpService: ObservableObject {
         args.append(contentsOf: buildFormatArgs(options: options))
         
 
-        if options.downloadSubtitles {
+        if options.downloadSubtitles && !options.subtitleLanguages.isEmpty {
             args.append("--write-subs")
-            if !options.subtitleLanguages.isEmpty {
-                args.append(contentsOf: ["--sub-langs", options.subtitleLanguages.joined(separator: ",")])
-            }
+            args.append("--write-auto-subs")
+            args.append(contentsOf: ["--sub-langs", options.subtitleLanguages.joined(separator: ",")])
             if options.embedSubtitles && options.fileType.isVideo {
                 args.append("--embed-subs")
             }
@@ -437,6 +462,13 @@ class YtdlpService: ObservableObject {
             process.standardOutput = pipe
             process.standardError = pipe
             
+            // Add binaries to PATH
+            var env = ProcessInfo.processInfo.environment
+            let appSupport = getAppSupportDirectory()
+            let currentPath = env["PATH"] ?? ""
+            env["PATH"] = "\(appSupport.path):\(currentPath)"
+            process.environment = env
+            
 
             var outputData = Data()
             pipe.fileHandleForReading.readabilityHandler = { handle in
@@ -494,8 +526,14 @@ class YtdlpService: ObservableObject {
             process.arguments = args
             process.currentDirectoryURL = saveFolder
             process.standardOutput = outputPipe
-            process.standardOutput = outputPipe
             process.standardError = errorPipe
+            
+            // Add binaries to PATH
+            var env = ProcessInfo.processInfo.environment
+            let appSupport = getAppSupportDirectory()
+            let currentPath = env["PATH"] ?? ""
+            env["PATH"] = "\(appSupport.path):\(currentPath)"
+            process.environment = env
             
             onProcessCreated(process)
             

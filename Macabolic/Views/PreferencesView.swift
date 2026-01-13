@@ -15,6 +15,7 @@ struct PreferencesView: View {
     @EnvironmentObject var updateChecker: UpdateChecker
     @State private var isUpdatingYtdlp = false
     @State private var ytdlpUpdateMessage: String?
+    @State private var selectedReleaseId: Int? = nil
     
     @Environment(\.dismiss) var dismiss
     
@@ -63,6 +64,9 @@ struct PreferencesView: View {
         }
         .onAppear {
             applyTheme(theme)
+            Task {
+                await updateChecker.fetchAllReleases()
+            }
         }
         .alert(languageService.s("update_ready_title"), isPresented: $updateChecker.needsRestart) {
             Button(languageService.s("ok")) {
@@ -199,6 +203,30 @@ struct PreferencesView: View {
                             Task {
                                 await updateChecker.checkForUpdates()
                             }
+                        }
+                    }
+                }
+            }
+            
+            Section(languageService.s("all_versions")) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Picker(languageService.s("select_version"), selection: $selectedReleaseId) {
+                        Text(languageService.s("select")).tag(nil as Int?)
+                        ForEach(updateChecker.availableReleases) { release in
+                            Text(release.tagName).tag(release.id as Int?)
+                        }
+                    }
+                    
+                    if let selectedId = selectedReleaseId,
+                       let release = updateChecker.availableReleases.first(where: { $0.id == selectedId }) {
+                        HStack {
+                            Spacer()
+                            Button(languageService.s("install")) {
+                                Task {
+                                    await updateChecker.installSpecificRelease(release)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
                         }
                     }
                 }
