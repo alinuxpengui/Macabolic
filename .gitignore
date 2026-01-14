@@ -73,3 +73,6 @@ build_log.txt
 dist/
 .DS_Store
 *.dmg
+
+# Test Builds
+build_test/
