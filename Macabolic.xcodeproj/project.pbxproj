@@ -18,6 +18,7 @@
 		E0001009 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0000009; };
 		E0001010 /* KeyringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0000010; };
 		E0001011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E0000011; };
+		E0001012 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E0000014; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,8 @@
 		E0000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E0000012 /* Macabolic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macabolic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0000013 /* Macabolic.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Macabolic.entitlements; sourceTree = "<group>"; };
+		E0000015 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		E0000016 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +113,7 @@
 			isa = PBXGroup;
 			children = (
 				E0000011 /* Assets.xcassets */,
+				E0000014 /* InfoPlist.strings */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -123,6 +127,18 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXVariantGroup section */
+		E0000014 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E0000015 /* en */,
+				E0000016 /* tr */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
 		E0004001 /* Macabolic */ = {
@@ -159,7 +175,7 @@
 			};
 			buildConfigurationList = E0005001 /* Build configuration list for PBXProject "Macabolic" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = tr;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
@@ -182,6 +198,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E0001011 /* Assets.xcassets in Resources */,
+				E0001012 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -347,7 +364,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.1;
+				MARKETING_VERSION = 2.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bytemeowster.macabolic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -376,7 +393,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.1;
+				MARKETING_VERSION = 2.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bytemeowster.macabolic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

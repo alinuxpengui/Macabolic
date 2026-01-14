@@ -16,6 +16,8 @@ struct PreferencesView: View {
     @State private var isUpdatingYtdlp = false
     @State private var ytdlpUpdateMessage: String?
     @State private var selectedReleaseId: Int? = nil
+    @State private var showLanguageChangeAlert = false
+    @State private var previousLanguage: Language? = nil
     
     @Environment(\.dismiss) var dismiss
     
@@ -62,8 +64,15 @@ struct PreferencesView: View {
         .onChange(of: theme) { newValue in
             applyTheme(newValue)
         }
+        .onChange(of: languageService.selectedLanguage) { newValue in
+            if previousLanguage != nil && previousLanguage != newValue {
+                showLanguageChangeAlert = true
+            }
+            previousLanguage = newValue
+        }
         .onAppear {
             applyTheme(theme)
+            previousLanguage = languageService.selectedLanguage
             Task {
                 await updateChecker.fetchAllReleases()
             }
@@ -74,6 +83,13 @@ struct PreferencesView: View {
             }
         } message: {
             Text(languageService.s("update_ready_message"))
+        }
+        .alert(languageService.s("language_changed_title"), isPresented: $showLanguageChangeAlert) {
+            Button(languageService.s("ok")) {
+                showLanguageChangeAlert = false
+            }
+        } message: {
+            Text(languageService.s("language_changed_message"))
         }
     }
     

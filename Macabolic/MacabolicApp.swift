@@ -285,7 +285,12 @@ enum Language: String, CaseIterable, Identifiable {
 }
 
 class LanguageService: ObservableObject {
-    @AppStorage("selectedLanguage") var selectedLanguage: Language = .english
+    @AppStorage("selectedLanguage") var selectedLanguage: Language = .english {
+        didSet {
+            // When language changes, update AppleLanguages for macOS menu bar localization
+            applyAppleLanguages(for: selectedLanguage)
+        }
+    }
     @AppStorage("isFirstLaunch") var isFirstLaunch: Bool = true
     
     init() {
@@ -294,6 +299,15 @@ class LanguageService: ObservableObject {
         if UserDefaults.standard.object(forKey: "selectedLanguage") == nil {
             self.selectedLanguage = .english
         }
+        
+        // Apply AppleLanguages on startup so macOS menu bar respects the saved preference
+        applyAppleLanguages(for: selectedLanguage)
+    }
+    
+    /// Sets the AppleLanguages UserDefaults so macOS uses the correct localization for system menus
+    private func applyAppleLanguages(for language: Language) {
+        UserDefaults.standard.set([language.rawValue], forKey: "AppleLanguages")
+        UserDefaults.standard.synchronize()
     }
     
     func s(_ key: String) -> String {
@@ -368,7 +382,7 @@ class LanguageService: ObservableObject {
             "url_hint": "YouTube, Instagram, X (Twitter) video veya oynatma listesi linki...",
             "no_subtitles": "Altyazı bulunamadı",
             "whats_new_title": "Macabolic %@ Güncellendi! 🎉",
-            "whats_new_message": "v%@ ile gelen yenilikler:\n• MKV ve diğer formatlardaki ses/altyazı birleştirme hataları (ffprobe) giderildi.\n• Sürüm Yönetimi: Ayarlar'dan eski sürümlere dönme desteği eklendi.\n• Yeni altyazı menüsü: Dahili ve Otomatik altyazılar ayrıldı.\n• Çeşitli hata düzeltmeleri ve performans iyileştirmeleri.",
+            "whats_new_message": "v%@ ile gelen yenilikler:\n• Uygulama içi dil değişikliği artık macOS menü barını da etkiliyor.\n• Dil değiştirildiğinde kullanıcıya yeniden başlatma talimatı gösteriliyor.\n• İngilizce ve Türkçe lokalizasyon dosyaları eklendi.",
             "paste_from_clipboard": "Panodan Yapıştır",
             "fetch_info": "Bilgi Al",
             "quality": "Kalite",
@@ -445,7 +459,9 @@ class LanguageService: ObservableObject {
             "legal_disclaimer_message": "YouTube ve diğer sitelerdeki videolar DMCA (Telif Hakkı) korumasına tabi olabilir. Macabolic geliştiricileri, bu uygulamanın yasaları ihlal eden şekilde kullanılmasını onaylamaz ve bundan sorumlu değildir.\n\nBu araç yalnızca kişisel kullanım, eğitim veya araştırma amaçlıdır. YouTube videolarını indirmek, videoda açık bir indirme butonu yoksa veya içerik indirmeye izin veren bir lisansa sahip değilse, Hizmet Şartlarını ihlal edebilir.\n\nBu uygulamayı kullanarak, indirdiğiniz tüm içeriklerin ve bunları nasıl kullandığınızın tüm sorumluluğunu üstlenmiş olursunuz. Geliştirici, bu aracın telif haklarını çiğnemek veya platform kurallarını ihlal etmek amacıyla kötüye kullanılmasını uygun görmez veya desteklemez.",
             "welcome_title": "Macabolic'e Hoş Geldiniz",
             "select_language": "Lütfen tercih ettiğiniz dili seçin:",
-            "start_using": "Kullanmaya Başla"
+            "start_using": "Kullanmaya Başla",
+            "language_changed_title": "Dil Değiştirildi",
+            "language_changed_message": "Uygulama içi dil başarıyla değiştirildi.\n\nmacOS üst menü barının da değişmesi için lütfen önce Tamam'a basın, ardından sol üstteki kırmızı butonla ayarları kapatın ve Command+Q ile uygulamayı tamamen kapatıp yeniden açın."
         ],
         .english: [
             "home": "Home",
@@ -514,7 +530,7 @@ class LanguageService: ObservableObject {
             "url_hint": "YouTube, Instagram, X (Twitter) video or playlist link...",
             "no_subtitles": "No subtitles found",
             "whats_new_title": "Macabolic Updated to %@! 🎉",
-            "whats_new_message": "What's new in v%@:\n• Fixed merging issues (ffprobe) for MKV and other formats.\n• Version Management: Added support for rolling back to specific versions from Settings.\n• New subtitle menu: Grouped Internal and Auto-generated subtitles.\n• Various bug fixes and performance improvements.",
+            "whats_new_message": "What's new in v%@:\n• In-app language changes now also affect the macOS menu bar.\n• Users are now prompted to restart when changing language.\n• Added English and Turkish localization files.",
             "paste_from_clipboard": "Paste from Clipboard",
             "fetch_info": "Get Video Information",
             "quality": "Quality",
@@ -591,7 +607,9 @@ class LanguageService: ObservableObject {
             "legal_disclaimer_message": "Videos on YouTube and other sites may be subject to DMCA protection. The authors of Macabolic do not endorse, and are not responsible for, the use of this application in means that will violate these laws.\n\nThis tool is intended solely for personal use and educational or research purposes. Downloading videos from YouTube may violate their Terms of Service unless the video has an explicit download button or the content is licensed in a way that permits downloading.\n\nBy using this app, you assume full responsibility for any content you download and how you use it. The developer does not condone or support any misuse of this tool to infringe upon copyrights or violate platform rules.",
             "welcome_title": "Welcome to Macabolic",
             "select_language": "Please select your preferred language:",
-            "start_using": "Get Started"
+            "start_using": "Get Started",
+            "language_changed_title": "Language Changed",
+            "language_changed_message": "The in-app language has been changed successfully.\n\nTo also change the macOS menu bar language, please click OK first, then close the settings using the red button in the top-left corner, and quit the app completely with Command+Q before reopening it."
         ]
     ]
 }

@@ -1,0 +1,4 @@
+/* Localized versions of Info.plist keys */
+"CFBundleDisplayName" = "Macabolic";
+"CFBundleName" = "Macabolic";
+"NSHumanReadableCopyright" = "Telif Hakkı © 2026 Macabolic. Tüm hakları saklıdır.";
