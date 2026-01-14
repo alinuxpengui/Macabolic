@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macabolic — Video Downloader for macOS</title>
+    <meta name="description" content="A native macOS video downloader. Simple, fast, beautiful.">
+    <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/alinuxpengui/Macabolic/main/Macabolic/Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #f9f8f3;
+            --surface: #ffffff;
+            --text: #111111;
+            --text-secondary: #666666;
+            --border: #e8e6df;
+            --accent: #111111;
+            --accent-hover: #333333;
+            --icon-opacity: 0.8;
+            --icon-glow: grayscale(0.5) brightness(0.7) drop-shadow(0 0 10px rgba(192, 132, 252, 0.6)) drop-shadow(0 0 20px rgba(236, 72, 153, 0.4));
+        }
+
+        /* Support for manual class-based theme switching */
+        html.dark-theme {
+            --bg: #121211;
+            --bg-gradient: linear-gradient(135deg, #121211 0%, #1c1b18 50%, #121211 100%);
+            --surface: #1a1917;
+            --text: #f0ede4;
+            --text-secondary: #a19d91;
+            --border: #2a2824;
+            --accent: #f0ede4;
+            --accent-hover: #ffffff;
+            --icon-opacity: 0.8;
+            --icon-glow: grayscale(0.5) brightness(0.7) drop-shadow(0 0 10px rgba(192, 132, 252, 0.8)) drop-shadow(0 0 20px rgba(236, 72, 153, 0.5));
+        }
+
+        @media (prefers-color-scheme: dark) {
+            html:not(.light-theme) {
+                --bg: #121211;
+                --bg-gradient: linear-gradient(135deg, #121211 0%, #1c1b18 50%, #121211 100%);
+                --surface: #1a1917;
+                --text: #f0ede4;
+                --text-secondary: #a19d91;
+                --border: #2a2824;
+                --accent: #f0ede4;
+                --accent-hover: #ffffff;
+                --icon-opacity: 0.8;
+                --icon-glow: grayscale(0.5) brightness(0.7) drop-shadow(0 0 10px rgba(192, 132, 252, 0.8)) drop-shadow(0 0 20px rgba(236, 72, 153, 0.5));
+            }
+        }
+
+        html.light-theme {
+            --bg: #f9f8f3;
+            --surface: #ffffff;
+            --text: #111111;
+            --text-secondary: #666666;
+            --border: #e8e6df;
+            --accent: #111111;
+            --accent-hover: #333333;
+            --icon-opacity: 0.8;
+            --icon-glow: grayscale(0.5) brightness(0.7) drop-shadow(0 0 10px rgba(192, 132, 252, 0.6)) drop-shadow(0 0 20px rgba(236, 72, 153, 0.4));
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            background-image: var(--bg-gradient, none);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            opacity: 0.4;
+        }
+
+        .floating-icon {
+            position: absolute;
+            font-size: 28px;
+            opacity: var(--icon-opacity);
+            animation: float 20s ease-in-out infinite;
+            filter: var(--icon-glow);
+            transition: opacity 0.3s, filter 0.3s;
+        }
+
+        .floating-icon:nth-child(1) {
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .floating-icon:nth-child(2) {
+            top: 20%;
+            left: 85%;
+            animation-delay: -3s;
+        }
+
+        .floating-icon:nth-child(3) {
+            top: 60%;
+            left: 10%;
+            animation-delay: -6s;
+        }
+
+        .floating-icon:nth-child(4) {
+            top: 70%;
+            left: 90%;
+            animation-delay: -9s;
+        }
+
+        .floating-icon:nth-child(5) {
+            top: 40%;
+            left: 50%;
+            animation-delay: -12s;
+        }
+
+        .floating-icon:nth-child(6) {
+            top: 85%;
+            left: 30%;
+            animation-delay: -15s;
+        }
+
+        .floating-icon:nth-child(7) {
+            top: 15%;
+            left: 60%;
+            animation-delay: -18s;
+        }
+
+        .floating-icon:nth-child(8) {
+            top: 50%;
+            left: 75%;
+            animation-delay: -4s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            25% {
+                transform: translate(20px, -30px) rotate(5deg);
+            }
+
+            50% {
+                transform: translate(-15px, 20px) rotate(-5deg);
+            }
+
+            75% {
+                transform: translate(25px, 15px) rotate(3deg);
+            }
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .logo:hover {
+            transform: scale(1.02);
+        }
+
+        .logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-3px);
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.15s, transform 0.15s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+            transform: translateY(-1px);
+        }
+
+        .github-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .star-count {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: var(--bg);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background: var(--surface);
+            border-color: var(--text-secondary);
+        }
+
+        .theme-toggle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--text-secondary);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .sun-icon {
+            display: none;
+        }
+
+        .moon-icon {
+            display: block;
+        }
+
+        html.dark-theme .sun-icon {
+            display: block;
+        }
+
+        html.dark-theme .moon-icon {
+            display: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            html:not(.light-theme) .sun-icon {
+                display: block;
+            }
+
+            html:not(.light-theme) .moon-icon {
+                display: none;
+            }
+        }
+
+        html.light-theme .sun-icon {
+            display: none;
+        }
+
+        html.light-theme .moon-icon {
+            display: block;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 160px 0 80px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 40px;
+            animation: fadeInUp 0.6s ease 0.1s both;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            animation: fadeInUp 0.6s ease 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Screenshots */
+        .screenshots {
+            padding: 40px 0 100px;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .screenshot-item {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideUp 0.6s ease forwards;
+        }
+
+        .screenshot-item:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .screenshot-item:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .screenshot-item:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .screenshot-item:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .screenshot-item:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border-color: var(--text-secondary);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            display: block;
+            transition: transform 0.3s;
+        }
+
+        .screenshot-item:hover img {
+            transform: scale(1.02);
+        }
+
+        .screenshot-label {
+            padding: 16px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+        }
+
+        /* Features */
+        .features {
+            padding: 100px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .features h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .feature {
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        .feature:nth-child(1) .feature-icon {
+            animation-delay: 0s;
+        }
+
+        .feature:nth-child(2) .feature-icon {
+            animation-delay: 0.2s;
+        }
+
+        .feature:nth-child(3) .feature-icon {
+            animation-delay: 0.4s;
+        }
+
+        .feature:nth-child(4) .feature-icon {
+            animation-delay: 0.6s;
+        }
+
+        .feature:nth-child(5) .feature-icon {
+            animation-delay: 0.8s;
+        }
+
+        .feature:nth-child(6) .feature-icon {
+            animation-delay: 1s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .feature h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .feature p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* CTA */
+        .cta {
+            padding: 100px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .cta h2 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text);
+        }
+
+        .footer-credit {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .footer-credit a {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 120px 0 60px;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                padding: 0 20px;
+            }
+
+            .screenshots-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .bg-animation {
+                display: none;
+            }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 480px;
+            width: 90%;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+        }
+
+        .modal h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .install-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: var(--bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .step-content code {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Floating background icons -->
+    <div class="bg-animation">
+        <div class="floating-icon">🎬</div>
+        <div class="floating-icon">⬇️</div>
+        <div class="floating-icon">🎵</div>
+        <div class="floating-icon">📺</div>
+        <div class="floating-icon">🎥</div>
+        <div class="floating-icon">💾</div>
+        <div class="floating-icon">🔊</div>
+        <div class="floating-icon">📁</div>
+    </div>
+
+    <header>
+        <div class="container header-inner">
+            <a href="#" class="logo">
+                <img src="https://raw.githubusercontent.com/alinuxpengui/Macabolic/main/Macabolic/Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128.png"
+                    alt="Macabolic">
+                Macabolic
+            </a>
+            <nav class="nav-links">
+                <a href="#screenshots">Screenshots</a>
+                <a href="#features">Features</a>
+                <a href="https://github.com/alinuxpengui/Macabolic" target="_blank" class="github-link">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                    </svg>
+                    GitHub
+                    <span class="star-count" id="star-count">⭐ --</span>
+                </a>
+                <a href="https://github.com/sponsors/alinuxpengui" target="_blank">Sponsor ❤️</a>
+                <button class="theme-toggle" id="theme-toggle" title="Toggle Theme">
+                    <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z">
+                        </path>
+                    </svg>
+                    <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                        </path>
+                    </svg>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Download videos.<br>The Mac way.</h1>
+                <p>A native macOS app for downloading videos from YouTube and thousands of other sites. Simple, fast,
+                    beautiful.</p>
+                <div class="hero-buttons">
+                    <a href="#" class="btn" id="download-btn">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path
+                                d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                            <path
+                                d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                        </svg>
+                        Download for macOS
+                    </a>
+                    <a href="https://github.com/alinuxpengui/Macabolic" class="btn btn-outline" target="_blank">
+                        View Source
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="screenshots" id="screenshots">
+            <div class="container">
+                <div class="screenshots-grid">
+                    <div class="screenshot-item">
+                        <img src="https://raw.githubusercontent.com/alinuxpengui/Macabolic/main/Screenshots/screenshot-1.png"
+                            alt="Home Screen">
+                        <div class="screenshot-label">Home — Clean overview of your downloads</div>
+                    </div>
+                    <div class="screenshot-item">
+                        <img src="https://raw.githubusercontent.com/alinuxpengui/Macabolic/main/Screenshots/screenshot-2.png"
+                            alt="Add Download">
+                        <div class="screenshot-label">Add Download — Paste URL and go</div>
+                    </div>
+                    <div class="screenshot-item">
+                        <img src="https://raw.githubusercontent.com/alinuxpengui/Macabolic/main/Screenshots/screenshot-3.png"
+                            alt="Downloading">
+                        <div class="screenshot-label">Downloading — Watch progress in real-time</div>
+                    </div>
+                    <div class="screenshot-item">
+                        <img src="https://raw.githubusercontent.com/alinuxpengui/Macabolic/main/Screenshots/screenshot-4.png"
+                            alt="Download completed">
+                        <div class="screenshot-label">Download completed — Ready to enjoy</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="container">
+                <h2>Built for Mac users</h2>
+                <div class="features-grid">
+                    <div class="feature">
+                        <div class="feature-icon">🎬</div>
+                        <h3>Thousands of Sites</h3>
+                        <p>YouTube, Vimeo, Twitter, Instagram, and many more.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Native Performance</h3>
+                        <p>Built with SwiftUI. Fast, lightweight, no bloat.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">📺</div>
+                        <h3>Up to 4K</h3>
+                        <p>MP4, WebM, MP3, FLAC — your choice.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">📋</div>
+                        <h3>Playlist Support</h3>
+                        <p>Download entire playlists with one click.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">⏭️</div>
+                        <h3>SponsorBlock</h3>
+                        <p>Automatically skip sponsors and intros.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">🔄</div>
+                        <h3>Auto Updates</h3>
+                        <p>Always up-to-date with latest yt-dlp.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <h2>Free & Open Source</h2>
+                <p>No ads, no tracking, no subscriptions. Just download and use.</p>
+                <a href="#" class="btn" id="download-btn-2">Download Macabolic</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <div class="footer-links">
+                <a href="https://github.com/alinuxpengui/Macabolic" target="_blank">GitHub</a>
+                <a href="https://github.com/alinuxpengui/Macabolic/releases" target="_blank">Releases</a>
+                <a href="https://github.com/alinuxpengui/Macabolic/issues" target="_blank">Issues</a>
+                <a href="https://github.com/sponsors/alinuxpengui" target="_blank">Sponsor ❤️</a>
+            </div>
+            <div class="footer-credit">
+                Made by <a href="https://github.com/alinuxpengui">alinuxpengui</a> · Inspired by <a
+                    href="https://github.com/NickvisionApps/Parabolic">Parabolic</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Installation Modal -->
+    <div class="modal-overlay" id="install-modal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3>How to Install</h3>
+            <div class="install-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <strong>Download</strong>
+                        <p>The download of <code>Macabolic.dmg</code> should start automatically. If it doesn't, please
+                            click the button again.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <strong>Install</strong>
+                        <p>Open the DMG file and drag <strong>Macabolic</strong> to your <code>Applications</code>
+                            folder.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <strong>First Launch</strong>
+                        <p>Since the app is not notarized, you may need to right-click the app and select
+                            <strong>Open</strong> or go to <code>System Settings > Privacy & Security</code> and click
+                            <strong>Open Anyway</strong>.
+                        </p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <strong>Initial Setup</strong>
+                        <p>When the app opens, confirm the <strong>Legal Disclaimer</strong>. Go to <strong>Preferences
+                                (⌘,)</strong> to set your <strong>Language</strong> and <strong>Default Save
+                                Folder</strong>.</p>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 32px; text-align: center;">
+                <button class="btn" style="width: 100%;" onclick="closeModal()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let latestDownloadUrl = '';
+
+        // Fetch latest release and update download buttons
+        async function updateDownloadLinks() {
+            try {
+                const response = await fetch('https://api.github.com/repos/alinuxpengui/Macabolic/releases/latest');
+                const data = await response.json();
+                const dmgAsset = data.assets.find(a => a.name.endsWith('.dmg'));
+
+                if (dmgAsset) {
+                    latestDownloadUrl = dmgAsset.browser_download_url;
+                    document.querySelectorAll('#download-btn, #download-btn-2').forEach(btn => {
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            showModal();
+                        };
+                    });
+                }
+            } catch (e) {
+                document.querySelectorAll('#download-btn, #download-btn-2').forEach(btn => {
+                    btn.href = 'https://github.com/alinuxpengui/Macabolic/releases/latest';
+                });
+            }
+        }
+
+        function showModal() {
+            document.getElementById('install-modal').classList.add('active');
+            if (latestDownloadUrl) {
+                // Short delay before starting download so user sees the modal first
+                setTimeout(() => {
+                    window.location.href = latestDownloadUrl;
+                }, 500);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('install-modal').classList.remove('active');
+        }
+
+        // Close on escape key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Close on click outside
+        document.getElementById('install-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'install-modal') closeModal();
+        });
+
+        // Fetch star count
+        async function updateStarCount() {
+            try {
+                const response = await fetch('https://api.github.com/repos/alinuxpengui/Macabolic');
+                const data = await response.json();
+                const stars = data.stargazers_count;
+                document.getElementById('star-count').textContent = '⭐ ' + stars;
+            } catch (e) {
+                document.getElementById('star-count').textContent = '⭐';
+            }
+        }
+
+        updateDownloadLinks();
+        updateStarCount();
+
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+
+        // Initialize theme point
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            htmlElement.classList.add(savedTheme + '-theme');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = htmlElement.classList.contains('dark-theme') ||
+                (window.matchMedia('(prefers-color-scheme: dark)').matches && !htmlElement.classList.contains('light-theme'));
+
+            if (isDark) {
+                htmlElement.classList.remove('dark-theme');
+                htmlElement.classList.add('light-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlElement.classList.remove('light-theme');
+                htmlElement.classList.add('dark-theme');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+    </script>
+</body>
+
+</html>
