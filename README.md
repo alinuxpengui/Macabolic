@@ -7,8 +7,11 @@ A modern, fast, and beautiful video downloader for macOS. Powered by `yt-dlp`.
 <div align="center">
   <img src="Macabolic/Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" width="128" />
   <p>
-    <a href="https://github.com/alinuxpengui/Macabolic/releases/latest/download/Macabolic_v2.1.1.dmg">
+    <a href="https://github.com/alinuxpengui/Macabolic/releases/latest/download/Macabolic-v2.1.2.dmg">
       <img src="https://img.shields.io/badge/Download-macOS-blue?style=for-the-badge&logo=apple&logoColor=white" alt="Download Macabolic for macOS" />
+    </a>
+    <a href="https://github.com/alinuxpengui/homebrew-macabolic">
+      <img src="https://img.shields.io/badge/Homebrew-tap-FBB040?style=for-the-badge&logo=homebrew&logoColor=white" alt="Install via Homebrew" />
     </a>
     <a href="https://github.com/alinuxpengui/Macabolic/releases">
       <img src="https://img.shields.io/github/downloads/alinuxpengui/Macabolic/total?style=for-the-badge&color=818cf8" alt="Total Downloads" />
@@ -82,6 +85,15 @@ Here is what I'm planning to bring to Macabolic in the near future:
 - **Auto-Update:** Self-manages `yt-dlp` updates to ensure maximum compatibility.
 
 ## Installation 🚀
+
+### Option 1: Homebrew (Recommended)
+
+```bash
+brew tap alinuxpengui/macabolic
+brew install --cask macabolic
+```
+
+### Option 2: Manual Download
 
 - **Download:** Download the latest `Macabolic.dmg` from the [Releases](https://github.com/alinuxpengui/Macabolic/releases) page.
 - **Install:** Open the DMG file and drag **Macabolic** to your `Applications` folder.
