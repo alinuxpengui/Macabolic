@@ -598,7 +598,80 @@
 
         .footer-credit a {
             color: var(--text);
-            text-decoration: none;
+        }
+
+        /* Homebrew Section */
+        .homebrew-section {
+            margin-top: 32px;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: fadeInUp 0.6s ease 0.3s both;
+        }
+
+        .homebrew-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .homebrew-label img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .homebrew-command {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        html.light-theme .homebrew-command {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .homebrew-command:hover {
+            border-color: var(--text-secondary);
+            transform: translateY(-1px);
+        }
+
+        .homebrew-command code {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .homebrew-command .copy-icon {
+            width: 16px;
+            height: 16px;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .homebrew-command:hover .copy-icon {
+            color: var(--text);
+        }
+
+        .homebrew-command.copied {
+            border-color: #10b981;
+        }
+
+        .homebrew-command.copied .copy-icon {
+            color: #10b981;
         }
 
         /* Mobile */
@@ -828,6 +901,20 @@
                         View Source
                     </a>
                 </div>
+                <div class="homebrew-section">
+                    <div class="homebrew-label">
+                        <img src="https://brew.sh/assets/img/homebrew.svg" alt="Homebrew">
+                        <span>Install via Homebrew</span>
+                    </div>
+                    <div class="homebrew-command" onclick="copyHomebrewCommand(this)" title="Click to copy">
+                        <code>brew tap alinuxpengui/macabolic && brew install --cask macabolic</code>
+                        <svg class="copy-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -970,6 +1057,21 @@
 
     <script>
         let latestDownloadUrl = '';
+
+        // Copy Homebrew command to clipboard
+        function copyHomebrewCommand(element) {
+            const command = 'brew tap alinuxpengui/macabolic && brew install --cask macabolic';
+            navigator.clipboard.writeText(command).then(() => {
+                element.classList.add('copied');
+                const code = element.querySelector('code');
+                const originalText = code.textContent;
+                code.textContent = 'Copied!';
+                setTimeout(() => {
+                    element.classList.remove('copied');
+                    code.textContent = originalText;
+                }, 2000);
+            });
+        }
 
         // Fetch latest release and update download buttons
         async function updateDownloadLinks() {
