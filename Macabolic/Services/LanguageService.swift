@@ -87,8 +87,8 @@ class LanguageService: ObservableObject {
             "update_available_title": "Yeni Güncelleme Mevcut!",
             "update_available_message": "Macabolic'in yeni sürümü (v%@) hazır. Şimdi indirmek ister misiniz?",
             "later": "Daha Sonra",
-            "whats_new_title": "Macabolic v%@ - Yenilikler",
-            "whats_new_message": "• Sidebar'a 'Yolculuğumu Destekle' butonu eklendi. ❤️",
+            "whats_new_title": "Macabolic v2.1.3 - Yenilikler",
+            "whats_new_message": "• Sidebar'a 'Yolculuğumu Destekle' butonu eklendi. ❤️\n• Arayüz iyileştirmeleri yapıldı.\n• Kod temizliği ve performans optimizasyonları tamamlandı.",
             "app_up_to_date": "Uygulama zaten güncel",
             "downloading_update": "Güncelleme indiriliyor...",
             "installing_update": "Güncelleme kuruluyor ve yeniden başlatılıyor...",
@@ -253,8 +253,8 @@ class LanguageService: ObservableObject {
             "no_log": "No log yet...",
             "clear": "Clear",
             "support_btn": "Support My Journey",
-            "whats_new_title": "Macabolic v%@ - What's New",
-            "whats_new_message": "• 'Support My Journey' button added to the sidebar. ❤️"
+            "whats_new_title": "Macabolic v2.1.3 - What's New",
+            "whats_new_message": "• 'Support My Journey' button added to the sidebar. ❤️\n• UI refinements and improved user experience.\n• Code cleanup and production optimizations."
         ]
     ]
 }
