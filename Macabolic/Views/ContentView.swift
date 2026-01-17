@@ -139,25 +139,41 @@ struct SidebarView: View {
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 200, ideal: 220)
         .safeAreaInset(edge: .bottom) {
-
-            Button {
-                showPreferences = true
-            } label: {
-                HStack {
-                    Image(systemName: "gear")
-                    Text(languageService.s("settings"))
-                    Spacer()
-                    Text("⌘,")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+            VStack(spacing: 8) {
+                Link(destination: URL(string: "https://github.com/sponsors/alinuxpengui")!) {
+                    HStack {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.red)
+                        Text(languageService.selectedLanguage == .turkish ? "Yolculuğumu Destekle" : "Support My Journey")
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(8)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
+                .buttonStyle(.plain)
+                .padding(.horizontal, 8)
+
+                Button {
+                    showPreferences = true
+                } label: {
+                    HStack {
+                        Image(systemName: "gear")
+                        Text(languageService.s("settings"))
+                        Spacer()
+                        Text("⌘,")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 8)
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 8)
             .padding(.bottom, 8)
         }
         .toolbar {

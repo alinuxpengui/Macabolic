@@ -88,7 +88,7 @@ class LanguageService: ObservableObject {
             "update_available_message": "Macabolic'in yeni sürümü (v%@) hazır. Şimdi indirmek ister misiniz?",
             "later": "Daha Sonra",
             "whats_new_title": "Macabolic v%@ - Yenilikler",
-            "whats_new_message": "• Sidebar'a 'Yolculuğumu Destekle' butonu eklendi. ❤️"
+            "whats_new_message": "• Sidebar'a 'Yolculuğumu Destekle' butonu eklendi. ❤️",
             "app_up_to_date": "Uygulama zaten güncel",
             "downloading_update": "Güncelleme indiriliyor...",
             "installing_update": "Güncelleme kuruluyor ve yeniden başlatılıyor...",
@@ -145,8 +145,7 @@ class LanguageService: ObservableObject {
             "remove": "Kaldır",
             "download_log": "İndirme Logu",
             "close": "Kapat",
-            "no_log": "Henüz log yok...",
-            "support_btn": "Yolculuğumu Destekle"
+            "no_log": "Henüz log yok..."
         ],
         .english: [
             "home": "Home",
