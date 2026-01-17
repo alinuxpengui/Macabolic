@@ -37,12 +37,12 @@ Macabolic is a native macOS frontend for the powerful [yt-dlp](https://github.co
 <div align="center">
   <table>
     <tr>
-      <td width="50%"><img src="Screenshots/screenshot-1.png" alt="Home Screen" /></td>
-      <td width="50%"><img src="Screenshots/screenshot-2.png" alt="Download View" /></td>
+      <td width="50%"><img src="docs/screenshots/screenshot-1.png" alt="Home Screen" /></td>
+      <td width="50%"><img src="docs/screenshots/screenshot-2.png" alt="Download View" /></td>
     </tr>
     <tr>
-      <td width="50%"><img src="Screenshots/screenshot-3.png" alt="Preferences" /></td>
-      <td width="50%"><img src="Screenshots/screenshot-4.png" alt="History" /></td>
+      <td width="50%"><img src="docs/screenshots/screenshot-3.png" alt="Preferences" /></td>
+      <td width="50%"><img src="docs/screenshots/screenshot-4.png" alt="History" /></td>
     </tr>
   </table>
 </div>
