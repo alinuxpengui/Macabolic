@@ -49,5 +49,10 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add Casks/macabolic.rb
-          git commit -m "Update Macabolic to v${{ steps.version.outputs.version }}"
-          git push
+          # Only commit and push if there are changes
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Macabolic to v${{ steps.version.outputs.version }}"
+            git push
+          else
+            echo "No changes to commit"
+          fi
