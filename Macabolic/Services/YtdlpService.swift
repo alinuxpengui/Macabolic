@@ -101,7 +101,6 @@ class YtdlpService: ObservableObject {
             ffmpegPath = ffmpegInSupport
         }
         
-        // If either is missing, download both
         if !FileManager.default.fileExists(atPath: ffmpegInSupport.path) || 
            !FileManager.default.fileExists(atPath: ffprobeInSupport.path) {
             await downloadFfmpeg()
@@ -194,14 +193,9 @@ class YtdlpService: ObservableObject {
             throw YtdlpError.notFound
         }
         
-        // 1. Strateji: Önce tekil video olarak dene (--no-playlist)
-        // Bu, hem normal videolar için hem de "playlist içindeki video" linkleri için çalışır.
         do {
              return try await fetchSingleVideoInfo(path: path.path, url: url, credential: credential)
         } catch {
-            // Eğer parse hatası veya komut hatası alırsak ve URL bir playlist'e benziyorsa
-            // 2. Strateji: Playlist özeti olarak dene (--flat-playlist --dump-single-json)
-            // Bu, "saf playlist" linkleri (youtube.com/playlist?list=...) için gereklidir.
             if url.contains("list=") || url.contains("/playlist") {
                  return try await fetchPlaylistSummaryInfo(path: path.path, url: url, credential: credential)
             }
@@ -223,7 +217,6 @@ class YtdlpService: ObservableObject {
         
         args.append(url)
         
-        // Standart video parse işlemi
         let output = try await runCommand(args)
         guard let data = output.data(using: .utf8) else { throw YtdlpError.parseError }
         return try JSONDecoder().decode(MediaInfo.self, from: data)
@@ -246,26 +239,11 @@ class YtdlpService: ObservableObject {
         let output = try await runCommand(args)
         guard let data = output.data(using: .utf8) else { throw YtdlpError.parseError }
         
-        // Playlist metadatasını bir MediaInfo nesnesine dönüştür
-        // --flat-playlist çıktısında formatlar vb. yoktur, sadece title, id, entries gelir
         let decoder = JSONDecoder()
         
-        // Önce gevşek bir yapıya decode edip manuel mapleyelim veya MediaInfo'nun esnekliğine güvenelim.
-        // MediaInfo zaten çoğu alanı optional yaptığı için direkt deniyoruz.
-        // Ancak 'entries' alanı MediaInfo'da yok, decoder bunu görmezden gelecek.
-        // ID ve Title playlist bilgisi olacak.
         var info = try decoder.decode(MediaInfo.self, from: data)
         
-        // Bu bir playlist olduğu için manuel işaretleyelim (UI'da banner göstermek için)
-        // Eğer json'dan gelen 'playlist' alanı boşsa, ID'yi playlist ID olarak set edelim.
-        // MediaInfo struct'ı immutable (let) olduğu için yeni bir nesne oluşturmamız gerekebilir
-        // veya MediaInfo'yu var yapmalıydık. Şimdilik hack: MediaInfo'yu extension ile güncelleyemeyiz.
-        // Ama MediaInfo struct'ını değiştirmek yerine, 'playlist' alanının JSON'dan gelmesini umuyoruz.
-        // Flat playlist çıktısında "id" playlist ID'sidir. "title" playlist başlığıdır.
-        // "playlist" alanı ise boştur (çünkü video bir playlist'in parçası değil, kendisi playlist).
         
-        // UI'ın anlaması için 'playlist' alanının dolu olması lazım.
-        // Bu yüzden decode edilen veriden yeni bir MediaInfo türetelim.
         return MediaInfo(
             id: info.id,
             title: info.title,
@@ -335,15 +313,12 @@ class YtdlpService: ObservableObject {
         }
         
         var args = [path.path]
-        // Playlist engelleme
         args.append("--no-playlist")
         
-        // FFmpeg and Temp location
         let appSupport = getAppSupportDirectory()
         args.append(contentsOf: ["--ffmpeg-location", appSupport.path])
         args.append(contentsOf: ["--paths", "temp:/tmp"])
         
-        // Output template
         let outputTemplate: String
         if let customFilename = options.customFilename, !customFilename.isEmpty {
             outputTemplate = options.saveFolder.appendingPathComponent("\(customFilename).%(ext)s").path
@@ -423,7 +398,6 @@ class YtdlpService: ObservableObject {
         var args: [String] = []
         
         if options.fileType.isVideo {
-            // Video: Video + Audio
             var formatStr = ""
             if let resolution = options.videoResolution {
                 formatStr = "\(resolution.ytdlpValue)+bestaudio"
@@ -435,8 +409,6 @@ class YtdlpService: ObservableObject {
             args.append(contentsOf: ["-f", formatStr])
             args.append(contentsOf: ["--merge-output-format", options.fileType.fileExtension])
         } else {
-            // Audio Only: Use -f ba (best audio) to avoid downloading video stream
-            // and use -x to extract/convert to desired format
             args.append(contentsOf: ["-f", "ba/best"])
             args.append(contentsOf: ["-x", "--audio-format", options.fileType.fileExtension])
             
@@ -461,7 +433,6 @@ class YtdlpService: ObservableObject {
             process.standardOutput = pipe
             process.standardError = pipe
             
-            // Add binaries to PATH
             var env = ProcessInfo.processInfo.environment
             let appSupport = getAppSupportDirectory()
             let currentPath = env["PATH"] ?? ""
@@ -527,7 +498,6 @@ class YtdlpService: ObservableObject {
             process.standardOutput = outputPipe
             process.standardError = errorPipe
             
-            // Add binaries to PATH
             var env = ProcessInfo.processInfo.environment
             let appSupport = getAppSupportDirectory()
             let currentPath = env["PATH"] ?? ""

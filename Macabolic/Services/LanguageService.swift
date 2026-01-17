@@ -18,8 +18,6 @@ class LanguageService: ObservableObject {
     @AppStorage("selectedLanguage") var selectedLanguage: Language = .english
     @AppStorage("isFirstLaunch") var isFirstLaunch: Bool = true
     
-    // For existing users who already have "selectedLanguage" set in their UserDefaults,
-    // SwiftUI will use that value. New users will get .english.
     
     func s(_ key: String) -> String {
         return translations[selectedLanguage]?[key] ?? key

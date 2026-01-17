@@ -93,7 +93,6 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
-            // Filtrele: v1.0.0 hariç
             DispatchQueue.main.async {
                 self.availableReleases = releases.filter { $0.tagName != "v1.0.0" }
             }
@@ -157,7 +156,6 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }
     
     nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        // Dosyayı geçici konuma taşı (Bu işlem main thread gerektirmez ama property update gerektirir)
         let tempDmg = FileManager.default.temporaryDirectory.appendingPathComponent("Macabolic_Update.dmg")
         try? FileManager.default.removeItem(at: tempDmg)
         try? FileManager.default.moveItem(at: location, to: tempDmg)
@@ -202,7 +200,6 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
         do {
             try process.run()
             
-            // Wait 8 seconds then show restart UI
             DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
                 self.isInstalling = false
                 self.needsRestart = true
@@ -214,8 +211,6 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }
     
     func restartApp() {
-        // We use pkill to force exit and ask user to manually restart, 
-        // as automatic relaunching might be blocked by macOS Sandbox/Security settings.
         let script = "pkill Macabolic"
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
@@ -287,24 +282,19 @@ enum Language: String, CaseIterable, Identifiable {
 class LanguageService: ObservableObject {
     @AppStorage("selectedLanguage") var selectedLanguage: Language = .english {
         didSet {
-            // When language changes, update AppleLanguages for macOS menu bar localization
             applyAppleLanguages(for: selectedLanguage)
         }
     }
     @AppStorage("isFirstLaunch") var isFirstLaunch: Bool = true
     
     init() {
-        // If it's the very first time the app is opened, default to English.
-        // If the user already has a saved preference, @AppStorage will handle it.
         if UserDefaults.standard.object(forKey: "selectedLanguage") == nil {
             self.selectedLanguage = .english
         }
         
-        // Apply AppleLanguages on startup so macOS menu bar respects the saved preference
         applyAppleLanguages(for: selectedLanguage)
     }
     
-    /// Sets the AppleLanguages UserDefaults so macOS uses the correct localization for system menus
     private func applyAppleLanguages(for language: Language) {
         UserDefaults.standard.set([language.rawValue], forKey: "AppleLanguages")
         UserDefaults.standard.synchronize()

@@ -76,3 +76,5 @@ dist/
 
 # Test Builds
 build_test/
+build_release_universal/
+dmg_stage/

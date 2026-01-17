@@ -435,11 +435,9 @@ struct AddDownloadView: View {
                 mediaInfo = info
                 customFilename = info.title
                 
-                // Altyazıları işle ve listeyi hazırla
                 var subs: [SubtitleOption] = []
                 var foundLangs: Set<String> = []
                 
-                // 1. Manuel altyazılar
                 if let manual = info.subtitles {
                     for key in manual.keys {
                         if !foundLangs.contains(key) {
@@ -450,7 +448,6 @@ struct AddDownloadView: View {
                     }
                 }
                 
-                // 2. Otomatik altyazılar
                 if let auto = info.automaticCaptions {
                     for key in auto.keys {
                         if !foundLangs.contains(key) {
@@ -462,7 +459,6 @@ struct AddDownloadView: View {
                 }
                 
                 availableSubtitles = subs
-                // No default selection as requested
                 selectedSubtitleLangs.removeAll()
                 
             } catch { errorMessage = error.localizedDescription }
