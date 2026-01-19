@@ -144,7 +144,7 @@ struct SidebarView: View {
                     HStack {
                         Image(systemName: "heart.fill")
                             .foregroundColor(.red)
-                        Text(languageService.selectedLanguage == .turkish ? "Yolculuğumu Destekle" : "Support My Journey")
+                        Text(languageService.s("support_btn"))
                         Spacer()
                     }
                     .padding(.horizontal, 12)

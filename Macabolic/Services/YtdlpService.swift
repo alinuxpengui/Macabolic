@@ -398,12 +398,31 @@ class YtdlpService: ObservableObject {
         var args: [String] = []
         
         if options.fileType.isVideo {
-            var formatStr = ""
+            var videoBase = ""
             if let resolution = options.videoResolution {
-                formatStr = "\(resolution.ytdlpValue)+bestaudio"
+                videoBase = resolution.ytdlpValue
             } else {
-                formatStr = "bestvideo+bestaudio"
+                videoBase = "bestvideo"
             }
+            
+            var formatStr = ""
+            
+            if let codec = options.videoCodec {
+                var codecFilter = ""
+                switch codec {
+                case "h264": codecFilter = "[vcodec^=avc1]"
+                case "vp9": codecFilter = "[vcodec^=vp9]"
+                case "av1": codecFilter = "[vcodec^=av01]"
+                case "h265": codecFilter = "[vcodec~='^(hev1|hvc1)']"
+                default: break
+                }
+                formatStr = "\(videoBase)\(codecFilter)+bestaudio"
+            } else {
+                // Auto (H.264 Preference)
+                // Try H.264 first, fallback to standard selection
+                formatStr = "\(videoBase)[vcodec^=avc1]+bestaudio/\(videoBase)+bestaudio"
+            }
+            
             formatStr += "/best"
             
             args.append(contentsOf: ["-f", formatStr])

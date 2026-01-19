@@ -145,7 +145,13 @@ class LanguageService: ObservableObject {
             "remove": "Kaldır",
             "download_log": "İndirme Logu",
             "close": "Kapat",
-            "no_log": "Henüz log yok..."
+            "no_log": "Henüz log yok...",
+            "codec": "Codec",
+            "auto_h264": "Otomatik (H.264)",
+            "codec_warning": "Not: 1080p üzeri çözünürlükler için lütfen AV1 veya VP9 codec'ini seçin.",
+            "support_btn": "Macabolic'i Destekleyin",
+            "clear": "Temizle",
+            "format": "Format"
         ],
         .english: [
             "home": "Home",
@@ -251,10 +257,14 @@ class LanguageService: ObservableObject {
             "download_log": "Download Log",
             "close": "Close",
             "no_log": "No log yet...",
+            "codec": "Codec",
+            "auto_h264": "Auto (H.264)",
+            "codec_warning": "Note: For resolutions higher than 1080p, please select AV1 or VP9 codec.",
             "clear": "Clear",
-            "support_btn": "Support My Journey",
-            "whats_new_title": "Macabolic v2.1.3 - What's New",
-            "whats_new_message": "• 'Support My Journey' button added to the sidebar. ❤️\n• UI refinements and improved user experience.\n• Code cleanup and production optimizations."
+            "support_btn": "Support Macabolic",
+            "format": "Format",
+            "whats_new_title": "Macabolic v2.1.4 - What's New",
+            "whats_new_message": "• 🎬 Video Codec Selection: You can now manually select your preferred video codec (H.264, VP9, AV1, etc.) before downloading. The default 'Auto (H.264)' option prioritizes H.264 for compatibility.\n• ⚠️ Smart Quality Tips: A new helpful note appears when you select high resolutions (2K, 4K, or Best): 'Note: For resolutions higher than 1080p, please select AV1 or VP9 codec.'"
         ]
     ]
 }

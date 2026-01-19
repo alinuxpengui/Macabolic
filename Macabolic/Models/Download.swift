@@ -93,6 +93,7 @@ struct DownloadOptions: Codable {
     var timeFrameStart: String?
     var timeFrameEnd: String?
     var customFilename: String?
+    var videoCodec: String?
     var credential: Credential?
     
     static var `default`: DownloadOptions {

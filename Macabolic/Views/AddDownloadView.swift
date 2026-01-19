@@ -18,6 +18,8 @@ struct AddDownloadView: View {
     @State private var audioQuality: AudioQuality = .best
     @State private var customFilename: String = ""
     @State private var isVideoTab: Bool = true
+    @State private var availableCodecs: [CodecOption] = []
+    @State private var selectedCodec: String = "auto"
     
 
     @State private var downloadSubtitles: Bool = false
@@ -45,6 +47,11 @@ struct AddDownloadView: View {
         let id: String
         let name: String
         let isAuto: Bool
+    }
+    
+    struct CodecOption: Identifiable, Hashable {
+        let id: String
+        let name: String
     }
 
     var body: some View {
@@ -301,6 +308,27 @@ struct AddDownloadView: View {
                     .pickerStyle(.menu).frame(minWidth: 220, alignment: .leading)
                 }
             }
+            
+            if isVideoTab {
+                Picker(languageService.s("codec"), selection: $selectedCodec) {
+                    Text(languageService.s("auto_h264")).tag("auto")
+                    ForEach(availableCodecs) { codec in
+                        Text(codec.name).tag(codec.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(minWidth: 200, alignment: .leading)
+            }
+            
+            if isVideoTab && (videoResolution == .r1440p || videoResolution == .r2160p || videoResolution == .best) {
+                HStack {
+                    Image(systemName: "info.circle")
+                    Text(languageService.s("codec_warning"))
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+            }
         }
     }
 
@@ -461,6 +489,41 @@ struct AddDownloadView: View {
                 availableSubtitles = subs
                 selectedSubtitleLangs.removeAll()
                 
+                // Extract Codecs
+                var codecs: Set<String> = []
+                var codecOptions: [CodecOption] = []
+                
+                if let formats = info.formats {
+                    for format in formats {
+                        if let vcodec = format.vcodec, vcodec != "none" {
+                            if vcodec.hasPrefix("avc1") {
+                                if !codecs.contains("h264") {
+                                    codecs.insert("h264")
+                                    codecOptions.append(CodecOption(id: "h264", name: "H.264"))
+                                }
+                            } else if vcodec.hasPrefix("vp9") {
+                                if !codecs.contains("vp9") {
+                                    codecs.insert("vp9")
+                                    codecOptions.append(CodecOption(id: "vp9", name: "VP9"))
+                                }
+                            } else if vcodec.hasPrefix("av01") {
+                                if !codecs.contains("av1") {
+                                    codecs.insert("av1")
+                                    codecOptions.append(CodecOption(id: "av1", name: "AV1"))
+                                }
+                            } else if vcodec.hasPrefix("hev1") || vcodec.hasPrefix("hvc1") {
+                                if !codecs.contains("h265") {
+                                    codecs.insert("h265")
+                                    codecOptions.append(CodecOption(id: "h265", name: "H.265 (HEVC)"))
+                                }
+                            }
+                        }
+                    }
+                }
+                availableCodecs = codecOptions.sorted(by: { $0.name < $1.name })
+                selectedCodec = "auto"
+                selectedSubtitleLangs.removeAll()
+                
             } catch { errorMessage = error.localizedDescription }
             isLoading = false
         }
@@ -495,7 +558,8 @@ struct AddDownloadView: View {
             embedMetadata: embedMetadata,
             splitChapters: splitChapters,
             sponsorBlock: sponsorBlock,
-            customFilename: customFilename.isEmpty ? nil : customFilename
+            customFilename: customFilename.isEmpty ? nil : customFilename,
+            videoCodec: isVideoTab ? (selectedCodec == "auto" ? nil : selectedCodec) : nil
         )
         
         if downloadMode == .single {
