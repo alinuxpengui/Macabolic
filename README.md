@@ -64,6 +64,8 @@ To show my gratitude, the **first 5 sponsors** of any amount will be **permanent
 
 Here is what I'm planning to bring to Macabolic in the near future:
 
+- [ ] **Browser Cookies Support:** Use cookies from your browser to bypass YouTube's bot detection and access age-restricted or private content.
+- [ ] **Advanced Codec Default Settings & Presets:** Save and manage custom download presets with preferred codecs, resolutions, and audio quality settings.
 - [ ] **Official Apple Notarization:** Removing the "Unidentified Developer" warning for a professional experience.
 - [ ] **Browser Extensions:** One-click download directly from Safari, Chrome, and Firefox.
 - [ ] **Custom Post-Processing:** More tools to trim, convert, and manage your downloaded files.
