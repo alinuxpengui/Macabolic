@@ -7,7 +7,7 @@ A modern, fast, and beautiful video downloader for macOS. Powered by `yt-dlp`.
 <div align="center">
   <img src="Macabolic/Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" width="128" />
   <p>
-    <a href="https://github.com/alinuxpengui/Macabolic/releases/latest/download/Macabolic-v2.1.3.dmg">
+    <a href="https://github.com/alinuxpengui/Macabolic/releases/latest/download/Macabolic-v2.2.0.dmg">
       <img src="https://img.shields.io/badge/Download-macOS-blue?style=for-the-badge&logo=apple&logoColor=white" alt="Download Macabolic for macOS" />
     </a>
     <a href="https://github.com/alinuxpengui/homebrew-macabolic">
