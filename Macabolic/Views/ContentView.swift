@@ -130,10 +130,6 @@ struct SidebarView: View {
                 NavigationLink(value: NavigationItem.history) {
                     Label(NavigationItem.history.title(lang: languageService), systemImage: NavigationItem.history.icon)
                 }
-                
-                NavigationLink(value: NavigationItem.keyring) {
-                    Label(NavigationItem.keyring.title(lang: languageService), systemImage: NavigationItem.keyring.icon)
-                }
             }
         }
         .listStyle(.sidebar)
@@ -213,8 +209,6 @@ struct DetailView: View {
             DownloadListView(downloads: downloadManager.completedDownloads, emptyMessage: languageService.s("empty_completed"), showStop: false)
         case .history:
             HistoryView()
-        case .keyring:
-            KeyringView()
         }
     }
 }

@@ -82,7 +82,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }
 
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.1.1"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.2.0"
     }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
@@ -238,7 +238,6 @@ enum NavigationItem: String, CaseIterable, Identifiable {
     case queued
     case completed
     case history
-    case keyring
     
     var id: String { rawValue }
     
@@ -249,7 +248,6 @@ enum NavigationItem: String, CaseIterable, Identifiable {
         case .queued: return lang.s("queued")
         case .completed: return lang.s("completed")
         case .history: return lang.s("history")
-        case .keyring: return lang.s("keyring")
         }
     }
     
@@ -260,7 +258,6 @@ enum NavigationItem: String, CaseIterable, Identifiable {
         case .queued: return "clock"
         case .completed: return "checkmark.circle"
         case .history: return "clock.arrow.circlepath"
-        case .keyring: return "key"
         }
     }
 }
@@ -436,6 +433,7 @@ class LanguageService: ObservableObject {
             "auto_h264": "Otomatik (H.264)",
             "codec_warning": "Not: 1080p üzeri çözünürlükler için lütfen AV1 veya VP9 codec'ini seçin.",
             "clear": "Temizle",
+            "format": "Format",
             "support_btn": "Macabolic'i Destekleyin",
             "res_best": "En İyi",
             "res_worst": "En Düşük",
@@ -454,7 +452,43 @@ class LanguageService: ObservableObject {
             "select_language": "Lütfen tercih ettiğiniz dili seçin:",
             "start_using": "Kullanmaya Başla",
             "language_changed_title": "Dil Değiştirildi",
-            "language_changed_message": "Uygulama içi dil başarıyla değiştirildi.\n\nmacOS üst menü barının da değişmesi için lütfen önce Tamam'a basın, ardından sol üstteki kırmızı butonla ayarları kapatın ve Command+Q ile uygulamayı tamamen kapatıp yeniden açın."
+            "language_changed_message": "Uygulama içi dil başarıyla değiştirildi.\n\nmacOS üst menü barının da değişmesi için lütfen önce Tamam'a basın, ardından sol üstteki kırmızı butonla ayarları kapatın ve Command+Q ile uygulamayı tamamen kapatıp yeniden açın.",
+            "browser_cookies": "Giriş Kaynağı (Cookies)",
+            "none": "Yok",
+            "browser_hint": "Lütfen daha önce YouTube hesabınızla giriş yaptığınız bir tarayıcı seçiniz. macOS ilk kullanımda anahtar zinciri erişimi için şifre isteyebilir; 'Her Zaman İzin Ver'i seçerek süreci kalıcı olarak onaylayabilirsiniz.",
+            "fix_signin_error": "Ayarlarda Çöz",
+            "safari_warning": "Not: Safari çerezleri için Sistem Ayarları > Gizlilik ve Güvenlik > Tam Disk Erişimi kısmından Macabolic'e izin vermeniz gerekir. Safari dışı bir tarayıcı (Chrome, Brave vb.) kullanmanız çok daha kolay olacaktır.",
+            "open_system_settings": "Sistem Ayarlarını Aç",
+            "video_codec": "Video Codec",
+            "audio_codec": "Ses Codec",
+            "codec_auto": "Otomatik (En İyi)",
+            "codec_settings": "Codec Ayarları",
+            "reset_to_defaults": "Varsayılanlara Sıfırla",
+            "download_presets": "İndirme Presetleri",
+            "preset_best_quality": "En İyi Kalite",
+            "preset_max_compatibility": "Maksimum Uyumluluk",
+            "preset_smallest_size": "En Küçük Boyut",
+            "preset_audio_only": "Sadece Ses",
+            "preset_best_quality_desc": "AV1 + Opus, En yüksek kalite",
+            "preset_max_compatibility_desc": "H.264 + AAC, Tüm cihazlarda çalışır",
+            "preset_smallest_size_desc": "AV1 720p, En küçük dosya boyutu",
+            "preset_audio_only_desc": "Sadece ses indir (M4A)",
+            "apply_preset": "Uygula",
+            "preferred_video_codec": "Tercih Edilen Video Codec",
+            "preferred_audio_codec": "Tercih Edilen Ses Codec",
+            "codec_fallback_note": "Not: Seçilen codec mevcut değilse otomatik olarak en iyi alternatif seçilir.",
+            "custom_presets": "Özel Presetler",
+            "create_preset": "Yeni Preset Oluştur",
+            "preset_name": "Preset Adı",
+            "delete_preset": "Preseti Sil",
+            "no_custom_presets": "Henüz özel preset oluşturmadınız",
+            "save_as_preset": "Preset Olarak Kaydet",
+            "quick_presets": "Hızlı Presetler",
+            "default_subtitle_lang": "Varsayılan Altyazı Dili",
+            "embed_subtitles_preset": "Altyazıları Göm",
+            "subtitle_lang_hint": "Dil kodu (orn: tr, en)",
+            "preset_options": "Preset Ayarları",
+            "edit_preset": "Preseti Düzenle"
         ],
         .english: [
             "home": "Home",
@@ -587,6 +621,7 @@ class LanguageService: ObservableObject {
             "auto_h264": "Auto (H.264)",
             "codec_warning": "Note: For resolutions higher than 1080p, please select AV1 or VP9 codec.",
             "clear": "Clear",
+            "format": "Format",
             "support_btn": "Support Macabolic",
             "res_best": "Best Quality",
             "res_worst": "Worst Quality",
@@ -605,7 +640,43 @@ class LanguageService: ObservableObject {
             "select_language": "Please select your preferred language:",
             "start_using": "Get Started",
             "language_changed_title": "Language Changed",
-            "language_changed_message": "The in-app language has been changed successfully.\n\nTo also change the macOS menu bar language, please click OK first, then close the settings using the red button in the top-left corner, and quit the app completely with Command+Q before reopening it."
+            "language_changed_message": "The in-app language has been changed successfully.\n\nTo also change the macOS menu bar language, please click OK first, then close the settings using the red button in the top-left corner, and quit the app completely with Command+Q before reopening it.",
+            "browser_cookies": "Login Source (Cookies)",
+            "none": "None",
+            "browser_hint": "Please select a browser where you have previously logged in with your YouTube account. macOS may ask for keychain access on first use; select 'Always Allow' to permanently authorize this.",
+            "fix_signin_error": "Fix in Settings",
+            "safari_warning": "Note: For Safari cookies, you must grant 'Full Disk Access' to Macabolic in System Settings > Privacy & Security. Using a browser other than Safari (Chrome, Brave, etc.) will be much easier.",
+            "open_system_settings": "Open System Settings",
+            "video_codec": "Video Codec",
+            "audio_codec": "Audio Codec",
+            "codec_auto": "Auto (Best Available)",
+            "codec_settings": "Codec Settings",
+            "reset_to_defaults": "Reset to Defaults",
+            "download_presets": "Download Presets",
+            "preset_best_quality": "Best Quality",
+            "preset_max_compatibility": "Max Compatibility",
+            "preset_smallest_size": "Smallest Size",
+            "preset_audio_only": "Audio Only",
+            "preset_best_quality_desc": "AV1 + Opus, Highest quality",
+            "preset_max_compatibility_desc": "H.264 + AAC, Works on all devices",
+            "preset_smallest_size_desc": "AV1 720p, Smallest file size",
+            "preset_audio_only_desc": "Download audio only (M4A)",
+            "apply_preset": "Apply",
+            "preferred_video_codec": "Preferred Video Codec",
+            "preferred_audio_codec": "Preferred Audio Codec",
+            "codec_fallback_note": "Note: If selected codec is unavailable, the best alternative will be used.",
+            "custom_presets": "Custom Presets",
+            "create_preset": "Create New Preset",
+            "preset_name": "Preset Name",
+            "delete_preset": "Delete Preset",
+            "no_custom_presets": "You haven't created any custom presets yet",
+            "save_as_preset": "Save as Preset",
+            "quick_presets": "Quick Presets",
+            "default_subtitle_lang": "Default Subtitle Language",
+            "embed_subtitles_preset": "Embed Subtitles",
+            "subtitle_lang_hint": "Language code (e.g., en, es)",
+            "preset_options": "Preset Options",
+            "edit_preset": "Edit Preset"
         ]
     ]
 }

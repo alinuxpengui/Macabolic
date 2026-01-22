@@ -9,7 +9,11 @@ struct PreferencesView: View {
     @AppStorage("embedMetadata") private var embedMetadata: Bool = true
     @AppStorage("defaultFileType") private var defaultFileType: String = "mp4"
     @AppStorage("defaultVideoResolution") private var defaultVideoResolution: String = "best"
+    @AppStorage("defaultVideoCodec") private var defaultVideoCodec: String = "auto"
+    @AppStorage("defaultAudioCodec") private var defaultAudioCodec: String = "auto"
+    @AppStorage("selectedPreset") private var selectedPreset: String = "max_compatibility"
     @AppStorage("sponsorBlock") private var sponsorBlock: Bool = false
+    @AppStorage("browserForCookies") private var browserForCookies: String = "none"
     
     @EnvironmentObject var languageService: LanguageService
     @EnvironmentObject var updateChecker: UpdateChecker
@@ -18,6 +22,20 @@ struct PreferencesView: View {
     @State private var selectedReleaseId: Int? = nil
     @State private var showLanguageChangeAlert = false
     @State private var previousLanguage: Language? = nil
+    @State private var installedBrowsers: [SupportedBrowser] = []
+    @State private var customPresets: [CustomPreset] = []
+    @State private var showCreatePresetSheet = false
+    @State private var newPresetName = ""
+    @AppStorage("selectedCustomPresetId") private var selectedCustomPresetIdString: String = ""
+    
+    // Preset form state
+    @State private var presetFileType: MediaFileType = .mp4
+    @State private var presetVideoResolution: VideoResolution = .r1080p
+    @State private var presetVideoCodec: VideoCodec = .h264
+    @State private var presetAudioCodec: AudioCodec = .aac
+    @State private var presetEmbedSubtitles: Bool = false
+    @State private var presetSubtitleLang: String = ""
+    @State private var editingPreset: CustomPreset? = nil
     
     @Environment(\.dismiss) var dismiss
     
@@ -73,9 +91,14 @@ struct PreferencesView: View {
         .onAppear {
             applyTheme(theme)
             previousLanguage = languageService.selectedLanguage
+            installedBrowsers = BrowserUtils.shared.getInstalledBrowsers()
+            customPresets = CustomPreset.loadAll()
             Task {
                 await updateChecker.fetchAllReleases()
             }
+        }
+        .sheet(isPresented: $showCreatePresetSheet) {
+            createPresetSheet
         }
         .alert(languageService.s("update_ready_title"), isPresented: $updateChecker.needsRestart) {
             Button(languageService.s("ok")) {
@@ -256,7 +279,93 @@ struct PreferencesView: View {
     
     private var downloadTab: some View {
         Form {
-            Section(languageService.s("format_settings")) {
+            Section(languageService.s("download_presets")) {
+                Picker("", selection: $selectedPreset) {
+                    ForEach(DownloadPreset.allCases) { preset in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(preset.title(lang: languageService))
+                                    .fontWeight(.medium)
+                                Text(preset.description(lang: languageService))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .tag(preset.rawValue)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+                .labelsHidden()
+                .onChange(of: selectedPreset) { newValue in
+                    if let preset = DownloadPreset(rawValue: newValue) {
+                        selectedCustomPresetIdString = ""
+                        applyPreset(preset)
+                    }
+                }
+            }
+            
+            Section(languageService.s("custom_presets")) {
+                if customPresets.isEmpty {
+                    Text(languageService.s("no_custom_presets"))
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                } else {
+                    ForEach(customPresets) { preset in
+                        HStack {
+                            Button {
+                                selectedPreset = ""
+                                selectedCustomPresetIdString = preset.id.uuidString
+                                applyCustomPreset(preset)
+                            } label: {
+                                HStack {
+                                    Image(systemName: selectedCustomPresetIdString == preset.id.uuidString ? "largecircle.fill.circle" : "circle")
+                                        .foregroundColor(selectedCustomPresetIdString == preset.id.uuidString ? .accentColor : .secondary)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(preset.name)
+                                            .fontWeight(.medium)
+                                            .foregroundColor(.primary)
+                                        Text("\(preset.videoCodec.title(lang: languageService)) + \(preset.audioCodec.title(lang: languageService)) • \(preset.videoResolution.title(lang: languageService))\(preset.embedSubtitles == true ? " • CC: \(preset.subtitleLanguage ?? "")" : "")")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Spacer()
+                            
+                            HStack(spacing: 12) {
+                                Button {
+                                    startEditingPreset(preset)
+                                } label: {
+                                    Image(systemName: "pencil")
+                                        .foregroundColor(.blue)
+                                }
+                                .buttonStyle(.borderless)
+                                
+                                Button {
+                                    deleteCustomPreset(preset)
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                
+                Button {
+                    showCreatePresetSheet = true
+                } label: {
+                    Label(languageService.s("create_preset"), systemImage: "plus.circle")
+                }
+                .buttonStyle(.borderless)
+            }
+            
+            Section {
                 Picker(languageService.s("file_type"), selection: $defaultFileType) {
                     ForEach(MediaFileType.allCases) { type in
                         Text(type.rawValue).tag(type.rawValue.lowercased())
@@ -268,6 +377,38 @@ struct PreferencesView: View {
                         Text(res.title(lang: languageService)).tag(res.rawValue)
                     }
                 }
+                
+                HStack {
+                    Spacer()
+                    Button {
+                        resetFormatToDefaults()
+                    } label: {
+                        Label(languageService.s("reset_to_defaults"), systemImage: "arrow.counterclockwise")
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundColor(.secondary)
+                    .controlSize(.small)
+                }
+            } header: {
+                Text(languageService.s("format_settings"))
+            }
+            
+            Section(languageService.s("codec_settings")) {
+                Picker(languageService.s("preferred_video_codec"), selection: $defaultVideoCodec) {
+                    ForEach(VideoCodec.allCases) { codec in
+                        Text(codec.title(lang: languageService)).tag(codec.rawValue)
+                    }
+                }
+                
+                Picker(languageService.s("preferred_audio_codec"), selection: $defaultAudioCodec) {
+                    ForEach(AudioCodec.allCases) { codec in
+                        Text(codec.title(lang: languageService)).tag(codec.rawValue)
+                    }
+                }
+                
+                Text(languageService.s("codec_fallback_note"))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             
             Section(languageService.s("embed_options")) {
@@ -281,6 +422,159 @@ struct PreferencesView: View {
         }
         .formStyle(.grouped)
         .padding()
+    }
+    
+    private var createPresetSheet: some View {
+        VStack(spacing: 16) {
+            Text(editingPreset == nil ? languageService.s("create_preset") : languageService.s("edit_preset"))
+                .font(.headline)
+            
+            TextField(languageService.s("preset_name"), text: $newPresetName)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 350)
+            
+            Divider()
+            
+            Form {
+                Section(languageService.s("format_settings")) {
+                    Picker(languageService.s("file_type"), selection: $presetFileType) {
+                        ForEach(MediaFileType.allCases) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                    
+                    if presetFileType.isVideo {
+                        Picker(languageService.s("video_quality"), selection: $presetVideoResolution) {
+                            ForEach(VideoResolution.allCases) { res in
+                                Text(res.title(lang: languageService)).tag(res)
+                            }
+                        }
+                    }
+                }
+                
+                if presetFileType.isVideo {
+                    Section(languageService.s("codec_settings")) {
+                        Picker(languageService.s("video_codec"), selection: $presetVideoCodec) {
+                            ForEach(VideoCodec.allCases) { codec in
+                                Text(codec.title(lang: languageService)).tag(codec)
+                            }
+                        }
+                        
+                        Picker(languageService.s("audio_codec"), selection: $presetAudioCodec) {
+                            ForEach(AudioCodec.allCases) { codec in
+                                Text(codec.title(lang: languageService)).tag(codec)
+                            }
+                        }
+                    }
+                    
+                    Section(languageService.s("subtitles")) {
+                        Toggle(languageService.s("embed_subtitles_preset"), isOn: $presetEmbedSubtitles)
+                        
+                        if presetEmbedSubtitles {
+                            TextField(languageService.s("subtitle_lang_hint"), text: $presetSubtitleLang)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            
+            HStack {
+                Button(languageService.s("cancel")) {
+                    resetPresetForm()
+                    editingPreset = nil
+                    showCreatePresetSheet = false
+                }
+                .keyboardShortcut(.escape)
+                
+                Button(languageService.s("save")) {
+                    createCustomPreset()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(newPresetName.isEmpty)
+                .keyboardShortcut(.return)
+            }
+        }
+        .padding(20)
+        .frame(minWidth: 420, minHeight: 480)
+    }
+    
+    private func resetPresetForm() {
+        newPresetName = ""
+        presetFileType = .mp4
+        presetVideoResolution = .r1080p
+        presetVideoCodec = .h264
+        presetAudioCodec = .aac
+        presetEmbedSubtitles = false
+        presetSubtitleLang = ""
+    }
+    
+    private func startEditingPreset(_ preset: CustomPreset) {
+        editingPreset = preset
+        newPresetName = preset.name
+        presetFileType = preset.fileType
+        presetVideoResolution = preset.videoResolution
+        presetVideoCodec = preset.videoCodec
+        presetAudioCodec = preset.audioCodec
+        presetEmbedSubtitles = preset.embedSubtitles ?? false
+        presetSubtitleLang = preset.subtitleLanguage ?? ""
+        showCreatePresetSheet = true
+    }
+    
+    private func applyPreset(_ preset: DownloadPreset) {
+        defaultVideoCodec = preset.videoCodec.rawValue
+        defaultAudioCodec = preset.audioCodec.rawValue
+        defaultVideoResolution = preset.videoResolution.rawValue
+        defaultFileType = preset.fileType.rawValue.lowercased()
+    }
+    
+    private func applyCustomPreset(_ preset: CustomPreset) {
+        defaultVideoCodec = preset.videoCodec.rawValue
+        defaultAudioCodec = preset.audioCodec.rawValue
+        defaultVideoResolution = preset.videoResolution.rawValue
+        defaultFileType = preset.fileType.rawValue.lowercased()
+    }
+    
+    private func createCustomPreset() {
+        if let editing = editingPreset {
+            if let index = customPresets.firstIndex(where: { $0.id == editing.id }) {
+                customPresets[index].name = newPresetName
+                customPresets[index].fileType = presetFileType
+                customPresets[index].videoResolution = presetVideoResolution
+                customPresets[index].videoCodec = presetVideoCodec
+                customPresets[index].audioCodec = presetAudioCodec
+                customPresets[index].embedSubtitles = presetEmbedSubtitles
+                customPresets[index].subtitleLanguage = presetSubtitleLang
+            }
+            editingPreset = nil
+        } else {
+            let preset = CustomPreset(
+                name: newPresetName,
+                videoCodec: presetVideoCodec,
+                audioCodec: presetAudioCodec,
+                videoResolution: presetVideoResolution,
+                fileType: presetFileType,
+                embedSubtitles: presetEmbedSubtitles,
+                subtitleLanguage: presetSubtitleLang
+            )
+            customPresets.append(preset)
+        }
+        
+        CustomPreset.saveAll(customPresets)
+        resetPresetForm()
+        showCreatePresetSheet = false
+    }
+    
+    private func deleteCustomPreset(_ preset: CustomPreset) {
+        customPresets.removeAll { $0.id == preset.id }
+        CustomPreset.saveAll(customPresets)
+    }
+    
+    private func resetFormatToDefaults() {
+        defaultFileType = "mp4"
+        defaultVideoResolution = "best"
+        defaultVideoCodec = "auto"
+        defaultAudioCodec = "auto"
     }
     
 
@@ -311,6 +605,41 @@ struct PreferencesView: View {
                         Button(languageService.s("update_now")) {
                             updateYtdlp()
                         }
+                    }
+                }
+            }
+            
+            Section(languageService.s("browser_cookies")) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Picker("", selection: $browserForCookies) {
+                        Text(languageService.s("none")).tag("none")
+                        ForEach(installedBrowsers) { browser in
+                            Text(browser.displayName).tag(browser.id)
+                        }
+                    }
+                    .labelsHidden()
+                    
+                    Text(languageService.s("browser_hint"))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    if browserForCookies == "safari" {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(languageService.s("safari_warning"))
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                                .fixedSize(horizontal: false, vertical: true) // Ensure text wraps and doesn't truncate
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Button(languageService.s("open_system_settings")) {
+                                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                        .padding(.top, 4)
                     }
                 }
             }
@@ -452,12 +781,12 @@ struct PreferencesView: View {
                 try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: destination.path)
                 
                 await MainActor.run {
-                    ytdlpUpdateMessage = "✅ Güncelleme tamamlandı!"
+                    ytdlpUpdateMessage = languageService.s("update_complete")
                     isUpdatingYtdlp = false
                 }
             } catch {
                 await MainActor.run {
-                    ytdlpUpdateMessage = "❌ Hata: \(error.localizedDescription)"
+                    ytdlpUpdateMessage = languageService.s("update_error") + " \(error.localizedDescription)"
                     isUpdatingYtdlp = false
                 }
             }
@@ -469,4 +798,60 @@ struct PreferencesView: View {
 
 #Preview {
     PreferencesView()
+}
+
+enum SupportedBrowser: String, CaseIterable, Identifiable {
+    case chrome = "chrome"
+    case firefox = "firefox"
+    case opera = "opera"
+    case edge = "edge"
+    case brave = "brave"
+    case vivaldi = "vivaldi"
+    case safari = "safari"
+    case chromium = "chromium"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .chrome: return "Google Chrome"
+        case .firefox: return "Mozilla Firefox"
+        case .opera: return "Opera"
+        case .edge: return "Microsoft Edge"
+        case .brave: return "Brave"
+        case .vivaldi: return "Vivaldi"
+        case .safari: return "Safari"
+        case .chromium: return "Chromium"
+        }
+    }
+    
+    var bundleIdentifier: String {
+        switch self {
+        case .chrome: return "com.google.Chrome"
+        case .firefox: return "org.mozilla.firefox"
+        case .opera: return "com.operasoftware.Opera"
+        case .edge: return "com.microsoft.edgemac"
+        case .brave: return "com.brave.Browser"
+        case .vivaldi: return "com.vivaldi.Vivaldi"
+        case .safari: return "com.apple.Safari"
+        case .chromium: return "org.chromium.Chromium"
+        }
+    }
+}
+
+class BrowserUtils {
+    static let shared = BrowserUtils()
+    
+    func getInstalledBrowsers() -> [SupportedBrowser] {
+        let workspace = NSWorkspace.shared
+        var installed: [SupportedBrowser] = []
+        
+        for browser in SupportedBrowser.allCases {
+            if let _ = workspace.urlForApplication(withBundleIdentifier: browser.bundleIdentifier) {
+                installed.append(browser)
+            }
+        }
+        
+        return installed
+    }
 }

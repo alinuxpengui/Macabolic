@@ -97,7 +97,7 @@ class DownloadManager: ObservableObject {
         
         do {
 
-            let info = try await ytdlpService.fetchInfo(url: download.url, credential: download.options.credential)
+            let info = try await ytdlpService.fetchInfo(url: download.url)
             
             download.title = info.title
             download.duration = info.durationString

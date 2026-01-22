@@ -93,8 +93,8 @@ struct DownloadOptions: Codable {
     var timeFrameStart: String?
     var timeFrameEnd: String?
     var customFilename: String?
-    var videoCodec: String?
-    var credential: Credential?
+    var videoCodec: VideoCodec?
+    var audioCodec: AudioCodec?
     
     static var `default`: DownloadOptions {
         DownloadOptions(
@@ -255,19 +255,185 @@ enum VideoResolution: String, Codable, CaseIterable, Identifiable {
 }
 
 
-struct Credential: Codable, Identifiable, Hashable {
-    let id: UUID
-    var name: String
-    var username: String
-    var password: String
+enum VideoCodec: String, Codable, CaseIterable, Identifiable {
+    case auto = "auto"
+    case h264 = "h264"
+    case h265 = "h265"
+    case vp9 = "vp9"
+    case av1 = "av1"
     
-    init(name: String, username: String, password: String) {
-        self.id = UUID()
-        self.name = name
-        self.username = username
-        self.password = password
+    var id: String { rawValue }
+    
+    func title(lang: LanguageService) -> String {
+        switch self {
+        case .auto: return lang.s("codec_auto")
+        case .h264: return "H.264 (AVC)"
+        case .h265: return "H.265 (HEVC)"
+        case .vp9: return "VP9"
+        case .av1: return "AV1"
+        }
+    }
+    
+    var ytdlpFilter: String? {
+        switch self {
+        case .auto: return nil
+        case .h264: return "[vcodec^=avc1]"
+        case .h265: return "[vcodec~='^(hev1|hvc1)']"
+        case .vp9: return "[vcodec^=vp9]"
+        case .av1: return "[vcodec^=av01]"
+        }
+    }
+    
+    var compatibilityNote: String? {
+        switch self {
+        case .h264: return "Best compatibility with all devices"
+        case .h265: return "Good compression, limited browser support"
+        case .vp9: return "Good for 1440p+, wide support"
+        case .av1: return "Best compression, requires modern hardware"
+        case .auto: return nil
+        }
     }
 }
+
+
+enum AudioCodec: String, Codable, CaseIterable, Identifiable {
+    case auto = "auto"
+    case aac = "aac"
+    case opus = "opus"
+    case mp3 = "mp3"
+    case flac = "flac"
+    
+    var id: String { rawValue }
+    
+    func title(lang: LanguageService) -> String {
+        switch self {
+        case .auto: return lang.s("codec_auto")
+        case .aac: return "AAC (M4A)"
+        case .opus: return "Opus"
+        case .mp3: return "MP3"
+        case .flac: return "FLAC"
+        }
+    }
+    
+    var ytdlpFilter: String? {
+        switch self {
+        case .auto: return nil
+        case .aac: return "[acodec^=mp4a]"
+        case .opus: return "[acodec^=opus]"
+        case .mp3: return "[acodec^=mp3]"
+        case .flac: return "[acodec^=flac]"
+        }
+    }
+}
+
+
+enum DownloadPreset: String, Codable, CaseIterable, Identifiable {
+    case bestQuality = "best_quality"
+    case maxCompatibility = "max_compatibility"
+    case smallestSize = "smallest_size"
+    case audioOnly = "audio_only"
+    
+    var id: String { rawValue }
+    
+    func title(lang: LanguageService) -> String {
+        switch self {
+        case .bestQuality: return lang.s("preset_best_quality")
+        case .maxCompatibility: return lang.s("preset_max_compatibility")
+        case .smallestSize: return lang.s("preset_smallest_size")
+        case .audioOnly: return lang.s("preset_audio_only")
+        }
+    }
+    
+    func description(lang: LanguageService) -> String {
+        switch self {
+        case .bestQuality: return lang.s("preset_best_quality_desc")
+        case .maxCompatibility: return lang.s("preset_max_compatibility_desc")
+        case .smallestSize: return lang.s("preset_smallest_size_desc")
+        case .audioOnly: return lang.s("preset_audio_only_desc")
+        }
+    }
+    
+    var videoCodec: VideoCodec {
+        switch self {
+        case .bestQuality: return .av1
+        case .maxCompatibility: return .h264
+        case .smallestSize: return .av1
+        case .audioOnly: return .auto
+        }
+    }
+    
+    var audioCodec: AudioCodec {
+        switch self {
+        case .bestQuality: return .opus
+        case .maxCompatibility: return .aac
+        case .smallestSize: return .opus
+        case .audioOnly: return .aac
+        }
+    }
+    
+    var videoResolution: VideoResolution {
+        switch self {
+        case .bestQuality: return .best
+        case .maxCompatibility: return .r1080p
+        case .smallestSize: return .r720p
+        case .audioOnly: return .worst
+        }
+    }
+    
+    var fileType: MediaFileType {
+        switch self {
+        case .bestQuality: return .mkv
+        case .maxCompatibility: return .mp4
+        case .smallestSize: return .mp4
+        case .audioOnly: return .m4a
+        }
+    }
+}
+
+
+struct CustomPreset: Codable, Identifiable, Equatable {
+    let id: UUID
+    var name: String
+    var videoCodec: VideoCodec
+    var audioCodec: AudioCodec
+    var videoResolution: VideoResolution
+    var fileType: MediaFileType
+    var embedSubtitles: Bool?
+    var subtitleLanguage: String?
+    
+    init(name: String, videoCodec: VideoCodec, audioCodec: AudioCodec, videoResolution: VideoResolution, fileType: MediaFileType, embedSubtitles: Bool = false, subtitleLanguage: String = "") {
+        self.id = UUID()
+        self.name = name
+        self.videoCodec = videoCodec
+        self.audioCodec = audioCodec
+        self.videoResolution = videoResolution
+        self.fileType = fileType
+        self.embedSubtitles = embedSubtitles
+        self.subtitleLanguage = subtitleLanguage
+    }
+    
+    static func loadAll() -> [CustomPreset] {
+        guard let data = UserDefaults.standard.data(forKey: "customPresets") else {
+            return []
+        }
+        do {
+            return try JSONDecoder().decode([CustomPreset].self, from: data)
+        } catch {
+            print("Failed to decode custom presets: \(error)")
+            // If data is corrupted or incompatible, we return empty list to prevent crash
+            return []
+        }
+    }
+    
+    static func saveAll(_ presets: [CustomPreset]) {
+        if let data = try? JSONEncoder().encode(presets) {
+            UserDefaults.standard.set(data, forKey: "customPresets")
+        }
+    }
+}
+
+
+
 
 
 struct MediaInfo: Codable {

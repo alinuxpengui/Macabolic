@@ -5,6 +5,8 @@ struct AddDownloadView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var languageService: LanguageService
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("selectedPreset") private var selectedPreset: String = "max_compatibility"
+    @AppStorage("selectedCustomPresetId") private var selectedCustomPresetIdString: String = ""
     
     @State private var urlInput: String = ""
     @State private var isLoading: Bool = false
@@ -20,6 +22,10 @@ struct AddDownloadView: View {
     @State private var isVideoTab: Bool = true
     @State private var availableCodecs: [CodecOption] = []
     @State private var selectedCodec: String = "auto"
+    @State private var selectedAudioCodec: String = "auto"
+    @State private var customPresets: [CustomPreset] = []
+    @State private var selectedPresetName: String? = nil
+    @State private var presetSubtitleLanguage: String = ""
     
 
     @State private var downloadSubtitles: Bool = false
@@ -95,6 +101,35 @@ struct AddDownloadView: View {
         }
         .frame(width: 600, height: 750)
         .onAppear {
+            customPresets = CustomPreset.loadAll()
+            
+            // Check if custom preset is selected
+            if let customPresetId = UUID(uuidString: selectedCustomPresetIdString),
+               let customPreset = customPresets.first(where: { $0.id == customPresetId }) {
+                // Apply custom preset
+                videoResolution = customPreset.videoResolution
+                selectedCodec = customPreset.videoCodec.rawValue
+                selectedAudioCodec = customPreset.audioCodec.rawValue
+                isVideoTab = customPreset.fileType.isVideo
+                selectedPresetName = customPreset.name
+                downloadSubtitles = customPreset.embedSubtitles ?? false
+                embedSubtitles = customPreset.embedSubtitles ?? false
+                presetSubtitleLanguage = customPreset.subtitleLanguage ?? ""
+            } else if let preset = DownloadPreset(rawValue: selectedPreset) {
+                // Apply built-in preset
+                fileType = preset.fileType
+                videoResolution = preset.videoResolution
+                selectedCodec = preset.videoCodec.rawValue
+                selectedAudioCodec = preset.audioCodec.rawValue
+                isVideoTab = preset.fileType.isVideo
+                selectedPresetName = preset.title(lang: languageService)
+                
+                // Subtitles off by default for built-in
+                downloadSubtitles = false
+                embedSubtitles = false
+                presetSubtitleLanguage = ""
+            }
+            
             if let clipboardString = NSPasteboard.general.string(forType: .string),
                clipboardString.hasPrefix("http") {
                 urlInput = clipboardString
@@ -278,7 +313,66 @@ struct AddDownloadView: View {
 
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(languageService.s("format")).font(.headline)
+            HStack {
+                Text(languageService.s("format")).font(.headline)
+                Spacer()
+                
+                Menu {
+                    Section(languageService.s("download_presets")) {
+                        ForEach(DownloadPreset.allCases) { preset in
+                            Button {
+                                applyPreset(preset)
+                                selectedPresetName = preset.title(lang: languageService)
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(preset.title(lang: languageService))
+                                        Text(preset.description(lang: languageService))
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    if selectedPresetName == preset.title(lang: languageService) {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if !customPresets.isEmpty {
+                        Divider()
+                        Section(languageService.s("custom_presets")) {
+                            ForEach(customPresets) { preset in
+                                Button {
+                                    applyCustomPreset(preset)
+                                    selectedPresetName = preset.name
+                                } label: {
+                                    HStack {
+                                        Text(preset.name)
+                                        if selectedPresetName == preset.name {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "bolt.fill")
+                        if let presetName = selectedPresetName {
+                            Text("\(languageService.s("quick_presets")) (\(presetName))")
+                        } else {
+                            Text(languageService.s("quick_presets"))
+                        }
+                    }
+                    .font(.caption)
+                }
+                .menuStyle(.borderlessButton)
+            }
+            
             Picker("", selection: $isVideoTab) {
                 Text(languageService.s("video")).tag(true)
                 Text(languageService.s("audio")).tag(false)
@@ -310,14 +404,24 @@ struct AddDownloadView: View {
             }
             
             if isVideoTab {
-                Picker(languageService.s("codec"), selection: $selectedCodec) {
-                    Text(languageService.s("auto_h264")).tag("auto")
-                    ForEach(availableCodecs) { codec in
-                        Text(codec.name).tag(codec.id)
+                HStack(spacing: 24) {
+                    Picker(languageService.s("video_codec"), selection: $selectedCodec) {
+                        Text(languageService.s("codec_auto")).tag("auto")
+                        ForEach(availableCodecs) { codec in
+                            Text(codec.name).tag(codec.id)
+                        }
                     }
+                    .pickerStyle(.menu)
+                    .frame(minWidth: 200, alignment: .leading)
+                    
+                    Picker(languageService.s("audio_codec"), selection: $selectedAudioCodec) {
+                        ForEach(AudioCodec.allCases) { codec in
+                            Text(codec.title(lang: languageService)).tag(codec.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(minWidth: 200, alignment: .leading)
                 }
-                .pickerStyle(.menu)
-                .frame(minWidth: 200, alignment: .leading)
             }
             
             if isVideoTab && (videoResolution == .r1440p || videoResolution == .r2160p || videoResolution == .best) {
@@ -328,6 +432,38 @@ struct AddDownloadView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.top, 4)
+            }
+        }
+    }
+    
+    private func applyPreset(_ preset: DownloadPreset) {
+        selectedCodec = preset.videoCodec.rawValue
+        selectedAudioCodec = preset.audioCodec.rawValue
+        videoResolution = preset.videoResolution
+        fileType = preset.fileType
+        isVideoTab = preset.fileType.isVideo
+        
+        // Reset subtitles for built-in presets
+        downloadSubtitles = false
+        embedSubtitles = false
+        selectedSubtitleLangs.removeAll()
+        presetSubtitleLanguage = ""
+    }
+    
+    private func applyCustomPreset(_ preset: CustomPreset) {
+        selectedCodec = preset.videoCodec.rawValue
+        selectedAudioCodec = preset.audioCodec.rawValue
+        videoResolution = preset.videoResolution
+        fileType = preset.fileType
+        isVideoTab = preset.fileType.isVideo
+        downloadSubtitles = preset.embedSubtitles ?? false
+        embedSubtitles = preset.embedSubtitles ?? false
+        presetSubtitleLanguage = preset.subtitleLanguage ?? ""
+        
+        // If info already loaded, try to apply language
+        if !presetSubtitleLanguage.isEmpty && !availableSubtitles.isEmpty {
+            if availableSubtitles.contains(where: { $0.id == presetSubtitleLanguage }) {
+                selectedSubtitleLangs = [presetSubtitleLanguage]
             }
         }
     }
@@ -521,8 +657,18 @@ struct AddDownloadView: View {
                     }
                 }
                 availableCodecs = codecOptions.sorted(by: { $0.name < $1.name })
-                selectedCodec = "auto"
-                selectedSubtitleLangs.removeAll()
+                // Don't reset selectedCodec here - preserve preset selection
+                availableSubtitles = subs
+                
+                if !presetSubtitleLanguage.isEmpty {
+                    if foundLangs.contains(presetSubtitleLanguage) {
+                        selectedSubtitleLangs = [presetSubtitleLanguage]
+                    } else {
+                        selectedSubtitleLangs.removeAll()
+                    }
+                } else {
+                    selectedSubtitleLangs.removeAll()
+                }
                 
             } catch { errorMessage = error.localizedDescription }
             isLoading = false
@@ -545,6 +691,20 @@ struct AddDownloadView: View {
     }
 
     private func startDownload() {
+        let videoCodecEnum: VideoCodec? = {
+            if !isVideoTab || selectedCodec == "auto" {
+                return nil
+            }
+            return VideoCodec(rawValue: selectedCodec)
+        }()
+        
+        let audioCodecEnum: AudioCodec? = {
+            if !isVideoTab || selectedAudioCodec == "auto" {
+                return nil
+            }
+            return AudioCodec(rawValue: selectedAudioCodec)
+        }()
+        
         let options = DownloadOptions(
             saveFolder: saveFolder,
             fileType: fileType,
@@ -559,7 +719,8 @@ struct AddDownloadView: View {
             splitChapters: splitChapters,
             sponsorBlock: sponsorBlock,
             customFilename: customFilename.isEmpty ? nil : customFilename,
-            videoCodec: isVideoTab ? (selectedCodec == "auto" ? nil : selectedCodec) : nil
+            videoCodec: videoCodecEnum,
+            audioCodec: audioCodecEnum
         )
         
         if downloadMode == .single {

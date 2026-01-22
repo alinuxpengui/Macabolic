@@ -96,10 +96,20 @@ struct DownloadRowView: View {
                     }
                     
                     if let error = download.errorMessage {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                            .lineLimit(2)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .lineLimit(2)
+                            
+                            if error.contains("Sign in to confirm you're not a bot") {
+                                Button(languageService.s("fix_signin_error")) {
+                                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.mini)
+                            }
+                        }
                     }
                 }
                 

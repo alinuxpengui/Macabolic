@@ -188,22 +188,22 @@ class YtdlpService: ObservableObject {
 
     
 
-    func fetchInfo(url: String, credential: Credential? = nil) async throws -> MediaInfo {
+    func fetchInfo(url: String) async throws -> MediaInfo {
         guard let path = ytdlpPath else {
             throw YtdlpError.notFound
         }
         
         do {
-             return try await fetchSingleVideoInfo(path: path.path, url: url, credential: credential)
+             return try await fetchSingleVideoInfo(path: path.path, url: url)
         } catch {
             if url.contains("list=") || url.contains("/playlist") {
-                 return try await fetchPlaylistSummaryInfo(path: path.path, url: url, credential: credential)
+                 return try await fetchPlaylistSummaryInfo(path: path.path, url: url)
             }
             throw error // Playlist değilse orijinal hatayı fırlat
         }
     }
     
-    private func fetchSingleVideoInfo(path: String, url: String, credential: Credential?) async throws -> MediaInfo {
+    private func fetchSingleVideoInfo(path: String, url: String) async throws -> MediaInfo {
         var args = [
             path,
             "--dump-json",
@@ -211,9 +211,8 @@ class YtdlpService: ObservableObject {
             "--no-warnings"
         ]
         
-        if let credential = credential {
-            args.append(contentsOf: ["--username", credential.username, "--password", credential.password])
-        }
+        appendCookieArgs(to: &args)
+
         
         args.append(url)
         
@@ -222,7 +221,7 @@ class YtdlpService: ObservableObject {
         return try JSONDecoder().decode(MediaInfo.self, from: data)
     }
 
-    private func fetchPlaylistSummaryInfo(path: String, url: String, credential: Credential?) async throws -> MediaInfo {
+    private func fetchPlaylistSummaryInfo(path: String, url: String) async throws -> MediaInfo {
         var args = [
             path,
             "--dump-single-json",
@@ -230,9 +229,8 @@ class YtdlpService: ObservableObject {
             "--no-warnings"
         ]
         
-        if let credential = credential {
-            args.append(contentsOf: ["--username", credential.username, "--password", credential.password])
-        }
+        appendCookieArgs(to: &args)
+
         
         args.append(url)
         
@@ -265,7 +263,7 @@ class YtdlpService: ObservableObject {
     }
     
 
-    func fetchPlaylistInfo(url: String, credential: Credential? = nil) async throws -> [MediaInfo] {
+    func fetchPlaylistInfo(url: String) async throws -> [MediaInfo] {
         guard let path = ytdlpPath else {
             throw YtdlpError.notFound
         }
@@ -277,9 +275,8 @@ class YtdlpService: ObservableObject {
             "--no-warnings"
         ]
         
-        if let credential = credential {
-            args.append(contentsOf: ["--username", credential.username, "--password", credential.password])
-        }
+        appendCookieArgs(to: &args)
+
         
         args.append(url)
         
@@ -369,9 +366,10 @@ class YtdlpService: ObservableObject {
         }
         
 
-        if let credential = options.credential {
-            args.append(contentsOf: ["--username", credential.username, "--password", credential.password])
-        }
+
+        
+        appendCookieArgs(to: &args)
+
         
 
         args.append("--newline")
@@ -389,7 +387,7 @@ class YtdlpService: ObservableObject {
             onOutput: onOutput
         )
         
-        return URL(fileURLWithPath: outputPath)
+        return URL(fileURLWithPath: outputPath, relativeTo: options.saveFolder).absoluteURL
     }
     
 
@@ -407,28 +405,42 @@ class YtdlpService: ObservableObject {
             
             var formatStr = ""
             
-            if let codec = options.videoCodec {
-                var codecFilter = ""
-                switch codec {
-                case "h264": codecFilter = "[vcodec^=avc1]"
-                case "vp9": codecFilter = "[vcodec^=vp9]"
-                case "av1": codecFilter = "[vcodec^=av01]"
-                case "h265": codecFilter = "[vcodec~='^(hev1|hvc1)']"
-                default: break
+            // Build video codec filter
+            let videoCodecFilter = options.videoCodec?.ytdlpFilter ?? ""
+            let audioCodecFilter = options.audioCodec?.ytdlpFilter ?? ""
+            
+            if !videoCodecFilter.isEmpty || !audioCodecFilter.isEmpty {
+                // User selected specific codec(s)
+                let audioBase = audioCodecFilter.isEmpty ? "bestaudio" : "bestaudio\(audioCodecFilter)"
+                
+                if !videoCodecFilter.isEmpty {
+                    // Preferred codec with fallback chain
+                    formatStr = "\(videoBase)\(videoCodecFilter)+\(audioBase)"
+                    formatStr += "/\(videoBase)+\(audioBase)"  // Fallback: any video codec with preferred audio
+                    formatStr += "/\(videoBase)+bestaudio"     // Fallback: any video codec with any audio
+                } else {
+                    // Only audio codec specified
+                    formatStr = "\(videoBase)+\(audioBase)"
+                    formatStr += "/\(videoBase)+bestaudio"     // Fallback: any audio codec
                 }
-                formatStr = "\(videoBase)\(codecFilter)+bestaudio"
             } else {
-                // Auto (H.264 Preference)
-                // Try H.264 first, fallback to standard selection
-                formatStr = "\(videoBase)[vcodec^=avc1]+bestaudio/\(videoBase)+bestaudio"
+                // Auto mode: Best available
+                formatStr = "\(videoBase)+bestaudio"
             }
             
-            formatStr += "/best"
+            formatStr += "/best"  // Final fallback
             
             args.append(contentsOf: ["-f", formatStr])
             args.append(contentsOf: ["--merge-output-format", options.fileType.fileExtension])
         } else {
-            args.append(contentsOf: ["-f", "ba/best"])
+            // Audio-only download
+            var audioFormat = "ba"
+            
+            if let audioCodec = options.audioCodec, let filter = audioCodec.ytdlpFilter {
+                audioFormat = "ba\(filter)/ba"  // Preferred codec with fallback
+            }
+            
+            args.append(contentsOf: ["-f", "\(audioFormat)/best"])
             args.append(contentsOf: ["-x", "--audio-format", options.fileType.fileExtension])
             
             if let quality = options.audioQuality {
@@ -440,6 +452,14 @@ class YtdlpService: ObservableObject {
         
         return args
     }
+    
+    private func appendCookieArgs(to args: inout [String]) {
+        let browser = UserDefaults.standard.string(forKey: "browserForCookies") ?? "none"
+        if browser != "none" {
+            args.append(contentsOf: ["--cookies-from-browser", browser])
+        }
+    }
+
     
 
     private func runCommandAsync(_ args: [String]) async throws -> String {
@@ -554,6 +574,16 @@ class YtdlpService: ObservableObject {
                         let parts = line.components(separatedBy: "[download] Destination: ")
                         if parts.count > 1 {
                             outputPath = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                    }
+                    
+                    if line.contains("has already been downloaded") {
+                        let parts = line.components(separatedBy: "[download] ")
+                        if parts.count > 1 {
+                            let pathPart = parts[1].components(separatedBy: " has already been downloaded")
+                            if !pathPart.isEmpty {
+                                outputPath = pathPart[0].trimmingCharacters(in: .whitespacesAndNewlines)
+                            }
                         }
                     }
                     
