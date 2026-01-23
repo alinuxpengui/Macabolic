@@ -7,7 +7,7 @@ A modern, fast, and beautiful video downloader for macOS. Powered by `yt-dlp`.
 <div align="center">
   <img src="Macabolic/Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" width="128" />
   <p>
-    <a href="https://github.com/alinuxpengui/Macabolic/releases/latest/download/Macabolic-v2.2.0.dmg">
+    <a href="https://github.com/alinuxpengui/Macabolic/releases/latest/download/Macabolic-v2.3.0.dmg">
       <img src="https://img.shields.io/badge/Download-macOS-blue?style=for-the-badge&logo=apple&logoColor=white" alt="Download Macabolic for macOS" />
     </a>
     <a href="https://github.com/alinuxpengui/homebrew-macabolic">
@@ -66,6 +66,7 @@ Here is what I'm planning to bring to Macabolic in the near future:
 
 - [x] ~~**Browser Cookies Support:** Use cookies from your browser to bypass YouTube's bot detection and access age-restricted or private content.~~ ✅ (Completed in v2.2.0)
 - [x] ~~**Advanced Codec Default Settings & Presets:** Save and manage custom download presets with preferred codecs, resolutions, and audio quality settings.~~ ✅ (Completed in v2.2.0)
+- [x] ~~**Persistent History & Re-download:** Categorized completed/failed downloads that persist across sessions and easy re-downloading.~~ ✅ (Completed in v2.3.0)
 - [ ] **Official Apple Notarization:** Removing the "Unidentified Developer" warning for a professional experience.
 - [ ] **Browser Extensions:** One-click download directly from Safari, Chrome, and Firefox.
 - [ ] **Custom Post-Processing:** More tools to trim, convert, and manage your downloaded files.

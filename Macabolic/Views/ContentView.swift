@@ -28,7 +28,7 @@ struct ContentView: View {
                 .interactiveDismissDisabled()
         }
         .task {
-            await downloadManager.initialize()
+            await downloadManager.initialize(languageService: languageService)
             await updateChecker.checkForUpdates()
             if updateChecker.hasUpdate {
                 showUpdateAlert = true
@@ -107,7 +107,9 @@ struct SidebarView: View {
                         }
                     }
                 }
-                
+            }
+            
+            Section(languageService.s("history")) {
                 NavigationLink(value: NavigationItem.completed) {
                     HStack {
                         Label(NavigationItem.completed.title(lang: languageService), systemImage: NavigationItem.completed.icon)
@@ -124,11 +126,22 @@ struct SidebarView: View {
                         }
                     }
                 }
-            }
-            
-            Section(languageService.s("other")) {
-                NavigationLink(value: NavigationItem.history) {
-                    Label(NavigationItem.history.title(lang: languageService), systemImage: NavigationItem.history.icon)
+
+                NavigationLink(value: NavigationItem.failed) {
+                    HStack {
+                        Label(NavigationItem.failed.title(lang: languageService), systemImage: NavigationItem.failed.icon)
+                        Spacer()
+                        if downloadManager.failedCount > 0 {
+                            Text("\(downloadManager.failedCount)")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .clipShape(Capsule())
+                        }
+                    }
                 }
             }
         }
@@ -207,8 +220,8 @@ struct DetailView: View {
             DownloadListView(downloads: downloadManager.queuedDownloads, emptyMessage: languageService.s("empty_queued"), showStop: true)
         case .completed:
             DownloadListView(downloads: downloadManager.completedDownloads, emptyMessage: languageService.s("empty_completed"), showStop: false)
-        case .history:
-            HistoryView()
+        case .failed:
+            DownloadListView(downloads: downloadManager.failedDownloads, emptyMessage: languageService.s("empty_failed"), showStop: false)
         }
     }
 }
@@ -253,10 +266,19 @@ struct HomeView: View {
             .controlSize(.large)
             .keyboardShortcut("n", modifiers: .command)
             
-            HStack(spacing: 40) {
-                StatCard(title: languageService.s("stat_downloading"), count: downloadManager.downloadingCount, color: .blue)
-                StatCard(title: languageService.s("stat_queued"), count: downloadManager.queuedCount, color: .orange)
-                StatCard(title: languageService.s("stat_completed"), count: downloadManager.completedCount, color: .green)
+            HStack(spacing: 20) {
+                StatCard(title: languageService.s("stat_downloading"), count: downloadManager.downloadingCount, color: .blue) {
+                    appState.selectedNavItem = .downloading
+                }
+                StatCard(title: languageService.s("stat_queued"), count: downloadManager.queuedCount, color: .orange) {
+                    appState.selectedNavItem = .queued
+                }
+                StatCard(title: languageService.s("stat_completed"), count: downloadManager.completedCount, color: .green) {
+                    appState.selectedNavItem = .completed
+                }
+                StatCard(title: languageService.s("stat_failed"), count: downloadManager.failedCount, color: .red) {
+                    appState.selectedNavItem = .failed
+                }
             }
             .padding(.top, 20)
             
@@ -281,20 +303,28 @@ struct StatCard: View {
     let title: String
     let count: Int
     let color: Color
+    let action: () -> Void
     
     var body: some View {
-        VStack(spacing: 8) {
-            Text("\(count)")
-                .font(.system(size: 36, weight: .bold, design: .rounded))
-                .foregroundColor(color)
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Text("\(count)")
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .foregroundColor(color)
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .frame(width: 100)
+            .padding()
+            .background(color.opacity(0.1))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(color.opacity(0.2), lineWidth: 1)
+            )
         }
-        .frame(width: 100)
-        .padding()
-        .background(color.opacity(0.1))
-        .cornerRadius(12)
+        .buttonStyle(.plain)
     }
 }
 

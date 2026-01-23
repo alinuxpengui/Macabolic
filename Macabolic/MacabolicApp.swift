@@ -82,7 +82,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }
 
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.2.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.3.0"
     }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
@@ -237,7 +237,7 @@ enum NavigationItem: String, CaseIterable, Identifiable {
     case downloading
     case queued
     case completed
-    case history
+    case failed
     
     var id: String { rawValue }
     
@@ -247,7 +247,7 @@ enum NavigationItem: String, CaseIterable, Identifiable {
         case .downloading: return lang.s("downloading")
         case .queued: return lang.s("queued")
         case .completed: return lang.s("completed")
-        case .history: return lang.s("history")
+        case .failed: return lang.s("failed")
         }
     }
     
@@ -257,7 +257,7 @@ enum NavigationItem: String, CaseIterable, Identifiable {
         case .downloading: return "arrow.down.circle"
         case .queued: return "clock"
         case .completed: return "checkmark.circle"
-        case .history: return "clock.arrow.circlepath"
+        case .failed: return "exclamationmark.circle"
         }
     }
 }
@@ -315,6 +315,11 @@ class LanguageService: ObservableObject {
             "stat_downloading": "İndiriliyor",
             "stat_queued": "Kuyrukta",
             "stat_completed": "Tamamlandı",
+            "stat_failed": "Hata",
+            "empty_failed": "Başarısız indirme yok",
+            "download_failed_error": "İndirme başarısız oldu: %@",
+            "subtitle_download_failed": "Altyazı indirilemedi: %@",
+            "too_many_requests": "Çok fazla istek (429). Lütfen Ayarlar > Gelişmiş kısmından bir tarayıcı (çerez) seçin.",
             "preferences": "Ayarlar",
             "general": "Genel",
             "download": "İndirme",
@@ -368,8 +373,8 @@ class LanguageService: ObservableObject {
             "video_url": "Video / Playlist URL",
             "url_hint": "YouTube, Instagram, X (Twitter) video veya oynatma listesi linki...",
             "no_subtitles": "Altyazı bulunamadı",
-            "whats_new_title": "Macabolic v2.2.0 - Yenilikler",
-            "whats_new_message": "• 🍪 Tarayıcı Çerez (Cookie) Desteği: YouTube'un bot tespitini aşmak için tarayıcılarınızdan çerez çekme özelliği eklendi.\n• 🎨 Gelişmiş Format ve Ön Ayar Sistemi: Kendi indirme şablonlarınızı oluşturabilir; Video (H.264, AV1) ve Ses codec seçimlerini kaydedebilirsiniz.\n• 🛠️ İyileştirmeler: Keyring kaldırıldı, arayüz düzeltildi ve 'Play' butonu varsayılan oynatıcıyı açıyor.",
+            "whats_new_title": "Macabolic v2.3.0 - Yenilikler",
+            "whats_new_message": "• 🗄️ Gelişmiş Geçmiş Yönetimi: Tamamlanan ve hatalı indirmeler artık ayrı listelerde tutuluyor ve uygulama kapatılsa bile kalıcı olarak saklanıyor.\n• 📂 Yenilenen Navigasyon: Kenar çubuğu 'İndirmeler' ve 'Geçmiş' olarak iki ana bölüme ayrılarak kullanım kolaylığı sağlandı.\n• 🔄 Otomatik Güncelleme: İndirme durumları ve sayıları artık anlık olarak kendiliğinden güncelleniyor.\n• 🔃 Yeniden İndir: Tamamlanan veya durdurulan videoları tek tıkla tekrar indirme listesine ekleme özelliği eklendi.\n• 🍪 Akıllı Yönlendirme: Hız limiti (429) hatalarında kullanıcılar doğrudan Çerez ayarlarına yönlendirilerek çözüm odaklı rehberlik sağlandı.",
             "paste_from_clipboard": "Panodan Yapıştır",
             "fetch_info": "Bilgi Al",
             "quality": "Kalite",
@@ -488,7 +493,17 @@ class LanguageService: ObservableObject {
             "embed_subtitles_preset": "Altyazıları Göm",
             "subtitle_lang_hint": "Dil kodu (orn: tr, en)",
             "preset_options": "Preset Ayarları",
-            "edit_preset": "Preseti Düzenle"
+            "edit_preset": "Preseti Düzenle",
+            "subtitle_format": "Altyazı Formatı",
+            "file_exists_title": "Dosya Zaten Mevcut",
+            "file_exists_message": "Bu isimde bir dosya zaten var. Ne yapmak istersiniz?",
+            "overwrite": "Üzerine Yaz",
+            "add_number": "Dosya adının sonuna numara ekle",
+            "h264_resolution_warning": "H.264 codec 1080p üstü çözünürlükleri desteklemez. Lütfen VP9 veya AV1 codec'i seçin ya da farklı bir preset kullanın.",
+            "subtitle_output": "Altyazı Çıktısı",
+            "subtitle_external": "Ayrı Dosya",
+            "subtitle_embedded": "Gömülü",
+            "h264_preset_info": "H.264 codec seçildi. Maksimum kalite 1080p ile sınırlıdır."
         ],
         .english: [
             "home": "Home",
@@ -503,6 +518,11 @@ class LanguageService: ObservableObject {
             "stat_downloading": "Downloading",
             "stat_queued": "In Queue",
             "stat_completed": "Completed",
+            "stat_failed": "Failed",
+            "empty_failed": "No failed downloads",
+            "download_failed_error": "Download failed: %@",
+            "subtitle_download_failed": "Subtitle download failed: %@",
+            "too_many_requests": "Too many requests (429). Please select a browser in Settings > Advanced.",
             "preferences": "Preferences",
             "general": "General",
             "download": "Download",
@@ -556,8 +576,8 @@ class LanguageService: ObservableObject {
             "video_url": "Video / Playlist URL",
             "url_hint": "YouTube, Instagram, X (Twitter) video or playlist link...",
             "no_subtitles": "No subtitles found",
-            "whats_new_title": "Macabolic v2.2.0 - What's New",
-            "whats_new_message": "• 🍪 Browser Cookie Support: Added ability to import cookies from browsers to bypass YouTube restrictions.\n• 🎨 Advanced Format & Presets: Create custom download templates with specific Video/Audio codec preferences.\n• 🛠️ Improvements: Keyring removed, UI polished, and 'Play' button now opens the default player.",
+            "whats_new_title": "Macabolic v2.3.0 - What's New",
+            "whats_new_message": "• 🗄️ Advanced History: Completed and failed downloads are now categorized separately and persist across app sessions.\n• 📂 Reorganized Navigation: The sidebar is now split into 'Downloading' and 'History' sections for better organization.\n• 🔄 Real-time Updates: Download statuses and counts now update automatically without manual navigation.\n• 🔃 Re-download Support: Easily add completed or failed items back to the download list with a single click.\n• 🍪 Smart Error Guidance: 429 errors now directly guide users to Browser Cookie settings for a quick fix.",
             "paste_from_clipboard": "Paste from Clipboard",
             "fetch_info": "Get Video Information",
             "quality": "Quality",
@@ -676,7 +696,17 @@ class LanguageService: ObservableObject {
             "embed_subtitles_preset": "Embed Subtitles",
             "subtitle_lang_hint": "Language code (e.g., en, es)",
             "preset_options": "Preset Options",
-            "edit_preset": "Edit Preset"
+            "edit_preset": "Edit Preset",
+            "subtitle_format": "Subtitle Format",
+            "file_exists_title": "File Already Exists",
+            "file_exists_message": "A file with this name already exists. What would you like to do?",
+            "overwrite": "Overwrite",
+            "add_number": "Add number to filename",
+            "h264_resolution_warning": "H.264 codec doesn't support resolutions above 1080p. Please select VP9 or AV1 codec, or use a different preset.",
+            "subtitle_output": "Subtitle Output",
+            "subtitle_external": "Separate File",
+            "subtitle_embedded": "Embedded",
+            "h264_preset_info": "H.264 codec selected. Maximum quality is limited to 1080p."
         ]
     ]
 }

@@ -14,7 +14,6 @@
 		E0001005 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0000005; };
 		E0001006 /* AddDownloadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0000006; };
 		E0001007 /* DownloadRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0000007; };
-		E0001008 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0000008; };
 		E0001009 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0000009; };
 		E0001010 /* KeyringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0000010; };
 		E0001011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E0000011; };
@@ -29,7 +28,6 @@
 		E0000005 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		E0000006 /* AddDownloadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddDownloadView.swift; sourceTree = "<group>"; };
 		E0000007 /* DownloadRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadRowView.swift; sourceTree = "<group>"; };
-		E0000008 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		E0000009 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		E0000010 /* KeyringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyringView.swift; sourceTree = "<group>"; };
 		E0000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -101,7 +99,6 @@
 			children = (
 				E0000002 /* ContentView.swift */,
 				E0000006 /* AddDownloadView.swift */,
-				E0000008 /* HistoryView.swift */,
 				E0000009 /* PreferencesView.swift */,
 				E0000010 /* KeyringView.swift */,
 				E0003008 /* Components */,
@@ -216,7 +213,6 @@
 				E0001005 /* DownloadManager.swift in Sources */,
 				E0001006 /* AddDownloadView.swift in Sources */,
 				E0001007 /* DownloadRowView.swift in Sources */,
-				E0001008 /* HistoryView.swift in Sources */,
 				E0001009 /* PreferencesView.swift in Sources */,
 				E0001010 /* KeyringView.swift in Sources */,
 			);
@@ -364,7 +360,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bytemeowster.macabolic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -393,7 +389,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bytemeowster.macabolic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

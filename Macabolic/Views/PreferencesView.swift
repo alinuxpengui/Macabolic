@@ -37,6 +37,15 @@ struct PreferencesView: View {
     @State private var presetSubtitleLang: String = ""
     @State private var editingPreset: CustomPreset? = nil
     
+    private var presetFilteredResolutions: [VideoResolution] {
+        if presetVideoCodec == .h264 {
+            return VideoResolution.allCases.filter { res in
+                res != .best && res != .r2160p && res != .r1440p
+            }
+        }
+        return VideoResolution.allCases
+    }
+    
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -445,8 +454,13 @@ struct PreferencesView: View {
                     
                     if presetFileType.isVideo {
                         Picker(languageService.s("video_quality"), selection: $presetVideoResolution) {
-                            ForEach(VideoResolution.allCases) { res in
+                            ForEach(presetFilteredResolutions) { res in
                                 Text(res.title(lang: languageService)).tag(res)
+                            }
+                        }
+                        .onChange(of: presetVideoCodec) { newCodec in
+                            if newCodec == .h264 && (presetVideoResolution == .r1440p || presetVideoResolution == .r2160p || presetVideoResolution == .best) {
+                                presetVideoResolution = .r1080p
                             }
                         }
                     }
@@ -465,14 +479,42 @@ struct PreferencesView: View {
                                 Text(codec.title(lang: languageService)).tag(codec)
                             }
                         }
+                        
+                        if presetVideoCodec == .h264 {
+                            HStack {
+                                Image(systemName: "info.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text(languageService.s("h264_preset_info"))
+                            }
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        }
                     }
                     
                     Section(languageService.s("subtitles")) {
-                        Toggle(languageService.s("embed_subtitles_preset"), isOn: $presetEmbedSubtitles)
+                        Toggle(languageService.s("download_subtitles"), isOn: $presetEmbedSubtitles)
                         
                         if presetEmbedSubtitles {
-                            TextField(languageService.s("subtitle_lang_hint"), text: $presetSubtitleLang)
-                                .textFieldStyle(.roundedBorder)
+                            Picker(languageService.s("subtitle_output"), selection: Binding(
+                                get: { presetSubtitleLang.hasPrefix("embed:") },
+                                set: { isEmbed in
+                                    let lang = presetSubtitleLang.replacingOccurrences(of: "embed:", with: "")
+                                    presetSubtitleLang = isEmbed ? "embed:\(lang)" : lang
+                                }
+                            )) {
+                                Text(languageService.s("subtitle_external")).tag(false)
+                                Text(languageService.s("subtitle_embedded")).tag(true)
+                            }
+                            .pickerStyle(.segmented)
+                            
+                            TextField(languageService.s("subtitle_lang_hint"), text: Binding(
+                                get: { presetSubtitleLang.replacingOccurrences(of: "embed:", with: "") },
+                                set: { newLang in
+                                    let isEmbed = presetSubtitleLang.hasPrefix("embed:")
+                                    presetSubtitleLang = isEmbed ? "embed:\(newLang)" : newLang
+                                }
+                            ))
+                            .textFieldStyle(.roundedBorder)
                         }
                     }
                 }

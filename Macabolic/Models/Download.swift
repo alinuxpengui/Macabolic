@@ -26,8 +26,8 @@ class Download: ObservableObject, Identifiable {
         return "\(percentage)%"
     }
     
-    init(url: String, options: DownloadOptions, title: String = "___FETCHING___") {
-        self.id = UUID()
+    init(url: String, options: DownloadOptions, title: String = "___FETCHING___", id: UUID = UUID()) {
+        self.id = id
         self.url = url
         self.options = options
         self.title = title
@@ -84,6 +84,7 @@ struct DownloadOptions: Codable {
     var audioQuality: AudioQuality?
     var downloadSubtitles: Bool
     var subtitleLanguages: [String]
+    var subtitleFormat: SubtitleFormat?
     var embedSubtitles: Bool
     var downloadThumbnail: Bool
     var embedThumbnail: Bool
@@ -95,6 +96,7 @@ struct DownloadOptions: Codable {
     var customFilename: String?
     var videoCodec: VideoCodec?
     var audioCodec: AudioCodec?
+    var forceOverwrite: Bool?
     
     static var `default`: DownloadOptions {
         DownloadOptions(
@@ -102,12 +104,14 @@ struct DownloadOptions: Codable {
             fileType: .mp4,
             downloadSubtitles: false,
             subtitleLanguages: ["tr", "en"],
+            subtitleFormat: .srt,
             embedSubtitles: false,
             downloadThumbnail: false,
             embedThumbnail: true,
             embedMetadata: true,
             splitChapters: false,
-            sponsorBlock: false
+            sponsorBlock: false,
+            forceOverwrite: false
         )
     }
 }
@@ -327,6 +331,27 @@ enum AudioCodec: String, Codable, CaseIterable, Identifiable {
 }
 
 
+enum SubtitleFormat: String, Codable, CaseIterable, Identifiable {
+    case srt = "srt"
+    case vtt = "vtt"
+    case ass = "ass"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .srt: return "SRT"
+        case .vtt: return "VTT (WebVTT)"
+        case .ass: return "ASS (Advanced)"
+        }
+    }
+    
+    var ytdlpValue: String {
+        rawValue
+    }
+}
+
+
 enum DownloadPreset: String, Codable, CaseIterable, Identifiable {
     case bestQuality = "best_quality"
     case maxCompatibility = "max_compatibility"
@@ -400,8 +425,9 @@ struct CustomPreset: Codable, Identifiable, Equatable {
     var fileType: MediaFileType
     var embedSubtitles: Bool?
     var subtitleLanguage: String?
+    var subtitleFormat: SubtitleFormat?
     
-    init(name: String, videoCodec: VideoCodec, audioCodec: AudioCodec, videoResolution: VideoResolution, fileType: MediaFileType, embedSubtitles: Bool = false, subtitleLanguage: String = "") {
+    init(name: String, videoCodec: VideoCodec, audioCodec: AudioCodec, videoResolution: VideoResolution, fileType: MediaFileType, embedSubtitles: Bool = false, subtitleLanguage: String = "", subtitleFormat: SubtitleFormat = .srt) {
         self.id = UUID()
         self.name = name
         self.videoCodec = videoCodec
@@ -410,6 +436,7 @@ struct CustomPreset: Codable, Identifiable, Equatable {
         self.fileType = fileType
         self.embedSubtitles = embedSubtitles
         self.subtitleLanguage = subtitleLanguage
+        self.subtitleFormat = subtitleFormat
     }
     
     static func loadAll() -> [CustomPreset] {
@@ -542,16 +569,47 @@ struct HistoricDownload: Codable, Identifiable {
     let id: UUID
     let url: String
     let title: String
-    let filePath: String
+    let filePath: String?
     let downloadDate: Date
     let fileType: MediaFileType
+    let status: DownloadStatus
+    let thumbnailURL: URL?
+    let duration: String?
+    let errorMessage: String?
+    let log: String
+    let progress: Double
+    let options: DownloadOptions
     
-    init(id: UUID, url: String, title: String, filePath: String, fileType: MediaFileType) {
-        self.id = id
-        self.url = url
-        self.title = title
-        self.filePath = filePath
+    @MainActor
+    init(download: Download) {
+        self.id = download.id
+        self.url = download.url
+        self.title = download.title
+        self.filePath = download.filePath?.path
         self.downloadDate = Date()
-        self.fileType = fileType
+        self.fileType = download.options.fileType
+        self.status = download.status
+        self.thumbnailURL = download.thumbnailURL
+        self.duration = download.duration
+        self.errorMessage = download.errorMessage
+        self.log = download.log
+        self.progress = download.progress
+        self.options = download.options
+    }
+
+    // Helper to convert back to Download object for UI
+    @MainActor
+    func toDownload() -> Download {
+        let download = Download(url: self.url, options: self.options, title: self.title, id: self.id)
+        download.status = self.status
+        download.progress = self.progress
+        download.thumbnailURL = self.thumbnailURL
+        download.duration = self.duration
+        download.errorMessage = self.errorMessage
+        download.log = self.log
+        if let path = self.filePath {
+            download.filePath = URL(fileURLWithPath: path)
+        }
+        return download
     }
 }

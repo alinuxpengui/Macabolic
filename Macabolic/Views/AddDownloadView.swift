@@ -32,10 +32,15 @@ struct AddDownloadView: View {
     @State private var selectedSubtitleLangs: Set<String> = []
     @State private var availableSubtitles: [SubtitleOption] = []
     @State private var embedSubtitles: Bool = true
+    @State private var subtitleFormat: SubtitleFormat = .srt
     @State private var embedThumbnail: Bool = true
     @State private var embedMetadata: Bool = true
     @State private var splitChapters: Bool = false
     @State private var sponsorBlock: Bool = false
+    
+    @State private var showFileExistsAlert: Bool = false
+    @State private var pendingDownloadOptions: DownloadOptions? = nil
+    @State private var existingFilePath: String = ""
     
     @State private var showAdvancedOptions: Bool = false
     
@@ -58,6 +63,15 @@ struct AddDownloadView: View {
     struct CodecOption: Identifiable, Hashable {
         let id: String
         let name: String
+    }
+    
+    private var filteredResolutions: [VideoResolution] {
+        if selectedCodec == "h264" {
+            return VideoResolution.allCases.filter { res in
+                res != .best && res != .r2160p && res != .r1440p
+            }
+        }
+        return VideoResolution.allCases
     }
 
     var body: some View {
@@ -83,8 +97,38 @@ struct AddDownloadView: View {
                         formatSection
                         saveSection
                         
-                        DisclosureGroup(languageService.s("extra_settings"), isExpanded: $showAdvancedOptions) {
-                            extraOptionsSection
+                        VStack(alignment: .leading, spacing: 12) {
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showAdvancedOptions.toggle()
+                                }
+                            } label: {
+                                HStack {
+                                    Image(systemName: showAdvancedOptions ? "chevron.down" : "chevron.right")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(.accentColor)
+                                    Text(languageService.s("extra_settings"))
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.gray.opacity(0.1))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            
+                            if showAdvancedOptions {
+                                extraOptionsSection
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
                         }
                         .padding(.top, 8)
                     }
@@ -103,10 +147,8 @@ struct AddDownloadView: View {
         .onAppear {
             customPresets = CustomPreset.loadAll()
             
-            // Check if custom preset is selected
             if let customPresetId = UUID(uuidString: selectedCustomPresetIdString),
                let customPreset = customPresets.first(where: { $0.id == customPresetId }) {
-                // Apply custom preset
                 videoResolution = customPreset.videoResolution
                 selectedCodec = customPreset.videoCodec.rawValue
                 selectedAudioCodec = customPreset.audioCodec.rawValue
@@ -116,7 +158,6 @@ struct AddDownloadView: View {
                 embedSubtitles = customPreset.embedSubtitles ?? false
                 presetSubtitleLanguage = customPreset.subtitleLanguage ?? ""
             } else if let preset = DownloadPreset(rawValue: selectedPreset) {
-                // Apply built-in preset
                 fileType = preset.fileType
                 videoResolution = preset.videoResolution
                 selectedCodec = preset.videoCodec.rawValue
@@ -124,7 +165,6 @@ struct AddDownloadView: View {
                 isVideoTab = preset.fileType.isVideo
                 selectedPresetName = preset.title(lang: languageService)
                 
-                // Subtitles off by default for built-in
                 downloadSubtitles = false
                 embedSubtitles = false
                 presetSubtitleLanguage = ""
@@ -144,6 +184,21 @@ struct AddDownloadView: View {
             if newValue.hasPrefix("http") && mediaInfo == nil && !isLoading {
                 fetchInfo()
             }
+        }
+        .alert(languageService.s("file_exists_title"), isPresented: $showFileExistsAlert) {
+            Button(languageService.s("overwrite"), role: .destructive) {
+                if let options = pendingDownloadOptions {
+                    proceedWithDownload(options: options, forceOverwrite: true)
+                }
+            }
+            Button(languageService.s("add_number")) {
+                downloadWithUniqueFilename()
+            }
+            Button(languageService.s("cancel"), role: .cancel) {
+                pendingDownloadOptions = nil
+            }
+        } message: {
+            Text(languageService.s("file_exists_message"))
         }
     }
     
@@ -392,9 +447,14 @@ struct AddDownloadView: View {
                 
                 if isVideoTab {
                     Picker(languageService.s("quality"), selection: $videoResolution) {
-                        ForEach(VideoResolution.allCases) { res in Text(res.title(lang: languageService)).tag(res) }
+                        ForEach(filteredResolutions) { res in Text(res.title(lang: languageService)).tag(res) }
                     }
                     .pickerStyle(.menu).frame(minWidth: 220, alignment: .leading)
+                    .onChange(of: selectedCodec) { newCodec in
+                        if newCodec == "h264" && (videoResolution == .r1440p || videoResolution == .r2160p || videoResolution == .best) {
+                            videoResolution = .r1080p
+                        }
+                    }
                 } else {
                     Picker(languageService.s("audio_quality"), selection: $audioQuality) {
                         ForEach(AudioQuality.allCases) { quality in Text(quality.title(lang: languageService)).tag(quality) }
@@ -424,7 +484,18 @@ struct AddDownloadView: View {
                 }
             }
             
-            if isVideoTab && (videoResolution == .r1440p || videoResolution == .r2160p || videoResolution == .best) {
+            if isVideoTab && selectedCodec == "h264" {
+                HStack {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundColor(.blue)
+                    Text(languageService.s("h264_preset_info"))
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+            }
+            
+            if isVideoTab && selectedCodec != "h264" && (videoResolution == .r1440p || videoResolution == .r2160p || videoResolution == .best) {
                 HStack {
                     Image(systemName: "info.circle")
                     Text(languageService.s("codec_warning"))
@@ -443,7 +514,6 @@ struct AddDownloadView: View {
         fileType = preset.fileType
         isVideoTab = preset.fileType.isVideo
         
-        // Reset subtitles for built-in presets
         downloadSubtitles = false
         embedSubtitles = false
         selectedSubtitleLangs.removeAll()
@@ -460,7 +530,6 @@ struct AddDownloadView: View {
         embedSubtitles = preset.embedSubtitles ?? false
         presetSubtitleLanguage = preset.subtitleLanguage ?? ""
         
-        // If info already loaded, try to apply language
         if !presetSubtitleLanguage.isEmpty && !availableSubtitles.isEmpty {
             if availableSubtitles.contains(where: { $0.id == presetSubtitleLanguage }) {
                 selectedSubtitleLangs = [presetSubtitleLanguage]
@@ -542,6 +611,14 @@ struct AddDownloadView: View {
                                     }
                                 }
                                 .menuStyle(.borderedButton)
+                            
+                            Picker(languageService.s("subtitle_format"), selection: $subtitleFormat) {
+                                ForEach(SubtitleFormat.allCases) { format in
+                                    Text(format.displayName).tag(format)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            
                             Toggle(languageService.s("embed_video"), isOn: $embedSubtitles)
                         }
                     }
@@ -712,6 +789,7 @@ struct AddDownloadView: View {
             audioQuality: isVideoTab ? nil : audioQuality,
             downloadSubtitles: isVideoTab ? downloadSubtitles : false,
             subtitleLanguages: Array(selectedSubtitleLangs),
+            subtitleFormat: subtitleFormat,
             embedSubtitles: isVideoTab ? embedSubtitles : false,
             downloadThumbnail: false,
             embedThumbnail: embedThumbnail,
@@ -724,18 +802,56 @@ struct AddDownloadView: View {
         )
         
         if downloadMode == .single {
-            downloadManager.addDownload(url: urlInput, options: options)
+            let filename = customFilename.isEmpty ? (mediaInfo?.title ?? "") : customFilename
+            if !filename.isEmpty {
+                let potentialPath = saveFolder.appendingPathComponent("\(filename).\(fileType.fileExtension)")
+                if FileManager.default.fileExists(atPath: potentialPath.path) {
+                    existingFilePath = potentialPath.path
+                    pendingDownloadOptions = options
+                    showFileExistsAlert = true
+                    return
+                }
+            }
+        }
+        
+        proceedWithDownload(options: options, forceOverwrite: false)
+    }
+    
+    private func proceedWithDownload(options: DownloadOptions, forceOverwrite: Bool) {
+        var finalOptions = options
+        finalOptions.forceOverwrite = forceOverwrite
+        
+        if downloadMode == .single {
+            downloadManager.addDownload(url: urlInput, options: finalOptions)
         } else {
             let selectedItems = playlistItems.filter { selectedPlaylistIds.contains($0.id) }
             for item in selectedItems {
                 let videoUrl = "https://www.youtube.com/watch?v=\(item.id)"
-                var itemOptions = options
+                var itemOptions = finalOptions
                 itemOptions.customFilename = nil 
                 downloadManager.addDownload(url: videoUrl, options: itemOptions)
             }
         }
         appState.selectedNavItem = .downloading
         dismiss()
+    }
+    
+    private func downloadWithUniqueFilename() {
+        guard var options = pendingDownloadOptions else { return }
+        
+        let originalFilename = customFilename.isEmpty ? (mediaInfo?.title ?? "video") : customFilename
+        var counter = 1
+        var newFilename = "\(originalFilename) (\(counter))"
+        var potentialPath = saveFolder.appendingPathComponent("\(newFilename).\(fileType.fileExtension)")
+        
+        while FileManager.default.fileExists(atPath: potentialPath.path) {
+            counter += 1
+            newFilename = "\(originalFilename) (\(counter))"
+            potentialPath = saveFolder.appendingPathComponent("\(newFilename).\(fileType.fileExtension)")
+        }
+        
+        options.customFilename = newFilename
+        proceedWithDownload(options: options, forceOverwrite: false)
     }
     
     private func selectFolder() {

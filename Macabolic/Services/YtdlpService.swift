@@ -329,11 +329,16 @@ class YtdlpService: ObservableObject {
         
 
         if options.downloadSubtitles && !options.subtitleLanguages.isEmpty {
+            let subFormat = options.subtitleFormat?.ytdlpValue ?? "srt"
+            args.append(contentsOf: ["--sub-format", "\(subFormat)/best"])
+            args.append(contentsOf: ["--sub-langs", options.subtitleLanguages.joined(separator: ",")])
+            
             args.append("--write-subs")
             args.append("--write-auto-subs")
-            args.append(contentsOf: ["--sub-langs", options.subtitleLanguages.joined(separator: ",")])
+            
             if options.embedSubtitles && options.fileType.isVideo {
                 args.append("--embed-subs")
+                args.append(contentsOf: ["--convert-subs", subFormat])
             }
         }
         
@@ -365,6 +370,9 @@ class YtdlpService: ObservableObject {
             args.append(contentsOf: ["--download-sections", "*\(start)-\(end)"])
         }
         
+        if options.forceOverwrite == true {
+            args.append("--force-overwrites")
+        }
 
 
         
@@ -387,7 +395,33 @@ class YtdlpService: ObservableObject {
             onOutput: onOutput
         )
         
+        if options.embedSubtitles && options.downloadSubtitles {
+            cleanupSubtitleFiles(for: outputPath, in: options.saveFolder)
+        }
+        
         return URL(fileURLWithPath: outputPath, relativeTo: options.saveFolder).absoluteURL
+    }
+    
+    private func cleanupSubtitleFiles(for videoPath: String, in folder: URL) {
+        let fileManager = FileManager.default
+        let videoURL = URL(fileURLWithPath: videoPath)
+        let videoNameWithoutExt = videoURL.deletingPathExtension().lastPathComponent
+        
+        let subtitleExtensions = ["srt", "vtt", "ass", "sub", "ssa"]
+        
+        do {
+            let contents = try fileManager.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+            for file in contents {
+                let fileName = file.deletingPathExtension().lastPathComponent
+                let fileExt = file.pathExtension.lowercased()
+                
+                if subtitleExtensions.contains(fileExt) && fileName.hasPrefix(videoNameWithoutExt) {
+                    try? fileManager.removeItem(at: file)
+                }
+            }
+        } catch {
+            print("Error cleaning up subtitle files: \(error)")
+        }
     }
     
 
@@ -414,21 +448,18 @@ class YtdlpService: ObservableObject {
                 let audioBase = audioCodecFilter.isEmpty ? "bestaudio" : "bestaudio\(audioCodecFilter)"
                 
                 if !videoCodecFilter.isEmpty {
-                    // Preferred codec with fallback chain
                     formatStr = "\(videoBase)\(videoCodecFilter)+\(audioBase)"
-                    formatStr += "/\(videoBase)+\(audioBase)"  // Fallback: any video codec with preferred audio
-                    formatStr += "/\(videoBase)+bestaudio"     // Fallback: any video codec with any audio
+                    formatStr += "/\(videoBase)+\(audioBase)"
+                    formatStr += "/\(videoBase)+bestaudio"
                 } else {
-                    // Only audio codec specified
                     formatStr = "\(videoBase)+\(audioBase)"
-                    formatStr += "/\(videoBase)+bestaudio"     // Fallback: any audio codec
+                    formatStr += "/\(videoBase)+bestaudio"
                 }
             } else {
-                // Auto mode: Best available
                 formatStr = "\(videoBase)+bestaudio"
             }
             
-            formatStr += "/best"  // Final fallback
+            formatStr += "/best"
             
             args.append(contentsOf: ["-f", formatStr])
             args.append(contentsOf: ["--merge-output-format", options.fileType.fileExtension])
@@ -597,10 +628,12 @@ class YtdlpService: ObservableObject {
             }
             
 
+            var errorOutput = ""
             errorPipe.fileHandleForReading.readabilityHandler = { handle in
                 let data = handle.availableData
                 guard !data.isEmpty, let line = String(data: data, encoding: .utf8) else { return }
                 DispatchQueue.main.async {
+                    errorOutput += line
                     onOutput("[ERROR] \(line)")
                 }
             }
@@ -612,7 +645,18 @@ class YtdlpService: ObservableObject {
                 if proc.terminationStatus == 0 {
                     continuation.resume(returning: outputPath)
                 } else {
-                    continuation.resume(throwing: YtdlpError.downloadFailed)
+                    if errorOutput.contains("429") || errorOutput.contains("Too Many Requests") {
+                        continuation.resume(throwing: YtdlpError.tooManyRequests)
+                    } else if errorOutput.contains("subtitle") || errorOutput.contains("caption") {
+                        continuation.resume(throwing: YtdlpError.subtitleError(errorOutput))
+                    } else {
+                        let cleanError = errorOutput.components(separatedBy: "\n")
+                            .filter { $0.contains("ERROR:") }
+                            .last?
+                            .replacingOccurrences(of: "ERROR: ", with: "")
+                            ?? errorOutput
+                        continuation.resume(throwing: YtdlpError.downloadFailed(cleanError))
+                    }
                 }
             }
             
@@ -636,18 +680,24 @@ enum YtdlpError: LocalizedError {
     case notFound
     case parseError
     case commandFailed(String)
-    case downloadFailed
+    case downloadFailed(String)
+    case tooManyRequests
+    case subtitleError(String)
     
     var errorDescription: String? {
         switch self {
         case .notFound:
-            return "yt-dlp bulunamadı"
+            return "yt-dlp not found"
         case .parseError:
-            return "Veri ayrıştırılamadı"
+            return "Failed to parse data"
         case .commandFailed(let output):
-            return "Komut başarısız: \(output)"
-        case .downloadFailed:
-            return "İndirme başarısız"
+            return "Command failed: \(output)"
+        case .downloadFailed(let output):
+            return output.isEmpty ? "Download failed" : output
+        case .tooManyRequests:
+            return "429: Too Many Requests"
+        case .subtitleError(let output):
+            return "Subtitle error: \(output)"
         }
     }
 }

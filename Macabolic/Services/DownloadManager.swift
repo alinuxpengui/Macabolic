@@ -18,6 +18,7 @@ class DownloadManager: ObservableObject {
     private let maxConcurrentDownloads = 3
     private let userDefaults = UserDefaults.standard
     private var activeProcesses: [UUID: Process] = [:]
+    private var languageService: LanguageService?
     
 
     
@@ -30,16 +31,22 @@ class DownloadManager: ObservableObject {
     }
     
     var completedDownloads: [Download] {
-        downloads.filter { $0.status == .completed || $0.status == .failed || $0.status == .stopped }
+        downloads.filter { $0.status == .completed }
+    }
+
+    var failedDownloads: [Download] {
+        downloads.filter { $0.status == .failed || $0.status == .stopped }
     }
     
     var downloadingCount: Int { downloadingDownloads.count }
     var queuedCount: Int { queuedDownloads.count }
     var completedCount: Int { completedDownloads.count }
+    var failedCount: Int { failedDownloads.count }
     
 
     
-    func initialize() async {
+    func initialize(languageService: LanguageService) async {
+        self.languageService = languageService
 
         await ytdlpService.setupBinaries()
         ytdlpVersion = ytdlpService.version
@@ -94,6 +101,7 @@ class DownloadManager: ObservableObject {
         }
         
         download.status = .fetching
+        objectWillChange.send()
         
         do {
 
@@ -103,6 +111,7 @@ class DownloadManager: ObservableObject {
             download.duration = info.durationString
             download.thumbnailURL = info.thumbnailURL
             download.status = .downloading
+            objectWillChange.send()
             
 
             let outputPath = try await ytdlpService.download(
@@ -128,13 +137,34 @@ class DownloadManager: ObservableObject {
             download.filePath = outputPath
             download.status = .completed
             download.progress = 1.0
+            objectWillChange.send()
             
 
             addToHistory(download)
             
+        } catch let error as YtdlpError {
+            download.status = .failed
+            objectWillChange.send()
+            if let lang = languageService {
+                switch error {
+                case .tooManyRequests:
+                    download.errorMessage = lang.s("too_many_requests")
+                case .subtitleError(let details):
+                    download.errorMessage = String(format: lang.s("subtitle_download_failed"), details)
+                case .downloadFailed(let reason):
+                    download.errorMessage = String(format: lang.s("download_failed_error"), reason)
+                default:
+                    download.errorMessage = error.localizedDescription
+                }
+            } else {
+                download.errorMessage = error.localizedDescription
+            }
+            addToHistory(download)
         } catch {
             download.status = .failed
+            objectWillChange.send()
             download.errorMessage = error.localizedDescription
+            addToHistory(download)
         }
     }
     
@@ -147,12 +177,15 @@ class DownloadManager: ObservableObject {
             activeProcesses.removeValue(forKey: download.id)
         }
         download.status = .stopped
+        objectWillChange.send()
+        addToHistory(download)
     }
     
 
     func retryDownload(_ download: Download) {
         download.status = .queued
         download.progress = 0
+        objectWillChange.send()
         download.errorMessage = nil
         download.log = ""
         
@@ -169,6 +202,7 @@ class DownloadManager: ObservableObject {
         for download in queuedDownloads {
             download.status = .stopped
         }
+        objectWillChange.send()
     }
     
 
@@ -185,13 +219,21 @@ class DownloadManager: ObservableObject {
     
 
     func clearCompletedDownloads() {
-        downloads.removeAll { $0.status == .completed || $0.status == .failed || $0.status == .stopped }
+        clearDownloads(completedDownloads + failedDownloads)
+    }
+    
+    func clearDownloads(_ items: [Download]) {
+        for item in items {
+            removeDownload(item)
+        }
     }
     
 
     func removeDownload(_ download: Download) {
         stopDownload(download)
         downloads.removeAll { $0.id == download.id }
+        history.removeAll { $0.id == download.id }
+        saveHistory()
     }
     
 
@@ -200,6 +242,9 @@ class DownloadManager: ObservableObject {
         if let data = userDefaults.data(forKey: "downloadHistory"),
            let decoded = try? JSONDecoder().decode([HistoricDownload].self, from: data) {
             history = decoded
+            // Restore as Download objects for UI
+            let restored = decoded.map { $0.toDownload() }
+            downloads.append(contentsOf: restored)
         }
     }
     
@@ -210,18 +255,14 @@ class DownloadManager: ObservableObject {
     }
     
     private func addToHistory(_ download: Download) {
-        let historicDownload = HistoricDownload(
-            id: download.id,
-            url: download.url,
-            title: download.title,
-            filePath: download.filePath?.path ?? "",
-            fileType: download.options.fileType
-        )
-        history.insert(historicDownload, at: 0)
+        let historic = HistoricDownload(download: download)
         
-
-        if history.count > 100 {
-            history = Array(history.prefix(100))
+        // Remove existing if any (upsert)
+        history.removeAll { $0.id == download.id }
+        history.insert(historic, at: 0)
+        
+        if history.count > 500 { // Increased limit for better user experience
+            history = Array(history.prefix(500))
         }
         
         saveHistory()

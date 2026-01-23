@@ -34,7 +34,7 @@ struct DownloadListView: View {
                         }
                     } else {
                         Button {
-                            downloadManager.clearCompletedDownloads()
+                            downloadManager.clearDownloads(downloads)
                         } label: {
                             Label(languageService.s("clear"), systemImage: "trash")
                         }
@@ -61,6 +61,7 @@ struct DownloadListView: View {
 struct DownloadRowView: View {
     @ObservedObject var download: Download
     @EnvironmentObject var downloadManager: DownloadManager
+    @EnvironmentObject var appState: AppState
     @EnvironmentObject var languageService: LanguageService
     let showStop: Bool
     
@@ -227,6 +228,15 @@ struct DownloadRowView: View {
                 }
                 .buttonStyle(.borderless)
                 .help(languageService.s("finder"))
+                
+                Button {
+                    appState.urlToDownload = download.url
+                    appState.showAddDownloadSheet = true
+                } label: {
+                    Image(systemName: "arrow.down.circle")
+                }
+                .buttonStyle(.borderless)
+                .help(languageService.s("redownload"))
             }
             
             if download.status == .failed || download.status == .stopped {
@@ -237,6 +247,15 @@ struct DownloadRowView: View {
                 }
                 .buttonStyle(.borderless)
                 .help(languageService.s("retry"))
+                
+                Button {
+                    appState.urlToDownload = download.url
+                    appState.showAddDownloadSheet = true
+                } label: {
+                    Image(systemName: "arrow.down.circle")
+                }
+                .buttonStyle(.borderless)
+                .help(languageService.s("redownload"))
             }
             
             if showStop && (download.status == .downloading || download.status == .queued) {
