@@ -9,10 +9,19 @@ struct ContentView: View {
     @State private var showUpdateAlert = false
     
     var body: some View {
-        NavigationSplitView {
-            SidebarView(showPreferences: $showPreferences)
-        } detail: {
-            DetailView()
+        Group {
+            if #available(macOS 13.0, *) {
+                NavigationSplitView {
+                    SidebarView(showPreferences: $showPreferences)
+                } detail: {
+                    DetailView()
+                }
+            } else {
+                NavigationView {
+                    SidebarView(showPreferences: $showPreferences)
+                    DetailView()
+                }
+            }
         }
         .sheet(isPresented: $appState.showAddDownloadSheet) {
             AddDownloadView()
@@ -58,7 +67,6 @@ struct ContentView: View {
     }
 }
 
-
 struct SidebarView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var downloadManager: DownloadManager
@@ -66,87 +74,23 @@ struct SidebarView: View {
     @Binding var showPreferences: Bool
     
     var body: some View {
-        List(selection: $appState.selectedNavItem) {
+        List {
             Section {
-                NavigationLink(value: NavigationItem.home) {
-                    Label(NavigationItem.home.title(lang: languageService), systemImage: NavigationItem.home.icon)
-                }
+                sidebarButton(item: .home)
             }
             
             Section(languageService.s("downloading")) {
-                NavigationLink(value: NavigationItem.downloading) {
-                    HStack {
-                        Label(NavigationItem.downloading.title(lang: languageService), systemImage: NavigationItem.downloading.icon)
-                        Spacer()
-                        if downloadManager.downloadingCount > 0 {
-                            Text("\(downloadManager.downloadingCount)")
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.accentColor)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
-                
-                NavigationLink(value: NavigationItem.queued) {
-                    HStack {
-                        Label(NavigationItem.queued.title(lang: languageService), systemImage: NavigationItem.queued.icon)
-                        Spacer()
-                        if downloadManager.queuedCount > 0 {
-                            Text("\(downloadManager.queuedCount)")
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.orange)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
+                sidebarButton(item: .downloading, badgeCount: downloadManager.downloadingCount, badgeColor: .blue)
+                sidebarButton(item: .queued, badgeCount: downloadManager.queuedCount, badgeColor: .orange)
             }
             
             Section(languageService.s("history")) {
-                NavigationLink(value: NavigationItem.completed) {
-                    HStack {
-                        Label(NavigationItem.completed.title(lang: languageService), systemImage: NavigationItem.completed.icon)
-                        Spacer()
-                        if downloadManager.completedCount > 0 {
-                            Text("\(downloadManager.completedCount)")
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.green)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
-
-                NavigationLink(value: NavigationItem.failed) {
-                    HStack {
-                        Label(NavigationItem.failed.title(lang: languageService), systemImage: NavigationItem.failed.icon)
-                        Spacer()
-                        if downloadManager.failedCount > 0 {
-                            Text("\(downloadManager.failedCount)")
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.red)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
+                sidebarButton(item: .completed, badgeCount: downloadManager.completedCount, badgeColor: .green)
+                sidebarButton(item: .failed, badgeCount: downloadManager.failedCount, badgeColor: .red)
             }
         }
         .listStyle(.sidebar)
-        .navigationSplitViewColumnWidth(min: 200, ideal: 220)
+        .macabolicSidebarWidth()
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 8) {
                 Link(destination: URL(string: "https://github.com/sponsors/alinuxpengui")!) {
@@ -195,8 +139,45 @@ struct SidebarView: View {
             }
         }
     }
+    
+    @ViewBuilder
+    private func sidebarButton(item: NavigationItem, badgeCount: Int = 0, badgeColor: Color = .blue) -> some View {
+        Button {
+            appState.selectedNavItem = item
+        } label: {
+            HStack {
+                Label(item.title(lang: languageService), systemImage: item.icon)
+                Spacer()
+                if badgeCount > 0 {
+                    Text("\(badgeCount)")
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(badgeColor)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, 2)
+        .foregroundColor(appState.selectedNavItem == item ? .accentColor : .primary)
+        .listRowBackground(appState.selectedNavItem == item ? Color.accentColor.opacity(0.1) : Color.clear)
+    }
 }
 
+extension View {
+    @ViewBuilder
+    func macabolicSidebarWidth() -> some View {
+        if #available(macOS 13.0, *) {
+            self.navigationSplitViewColumnWidth(min: 200, ideal: 220)
+        } else {
+            self.frame(minWidth: 200, idealWidth: 220, maxWidth: 300)
+        }
+    }
+}
 
 struct DetailView: View {
     @EnvironmentObject var appState: AppState
@@ -225,7 +206,6 @@ struct DetailView: View {
         }
     }
 }
-
 
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
@@ -284,7 +264,6 @@ struct HomeView: View {
             
             Spacer()
             
-
             if let version = downloadManager.ytdlpVersion {
                 HStack {
                     Image(systemName: "terminal")
@@ -326,11 +305,4 @@ struct StatCard: View {
         }
         .buttonStyle(.plain)
     }
-}
-
-#Preview {
-    ContentView()
-        .environmentObject(DownloadManager())
-        .environmentObject(AppState())
-        .environmentObject(LanguageService())
 }

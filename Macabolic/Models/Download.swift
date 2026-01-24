@@ -97,6 +97,7 @@ struct DownloadOptions: Codable {
     var videoCodec: VideoCodec?
     var audioCodec: AudioCodec?
     var forceOverwrite: Bool?
+    var additionalArguments: String?
     
     static var `default`: DownloadOptions {
         DownloadOptions(
@@ -111,7 +112,8 @@ struct DownloadOptions: Codable {
             embedMetadata: true,
             splitChapters: false,
             sponsorBlock: false,
-            forceOverwrite: false
+            forceOverwrite: false,
+            additionalArguments: nil
         )
     }
 }
@@ -407,7 +409,7 @@ enum DownloadPreset: String, Codable, CaseIterable, Identifiable {
     
     var fileType: MediaFileType {
         switch self {
-        case .bestQuality: return .mkv
+        case .bestQuality: return .mp4
         case .maxCompatibility: return .mp4
         case .smallestSize: return .mp4
         case .audioOnly: return .m4a
@@ -423,20 +425,32 @@ struct CustomPreset: Codable, Identifiable, Equatable {
     var audioCodec: AudioCodec
     var videoResolution: VideoResolution
     var fileType: MediaFileType
-    var embedSubtitles: Bool?
+    var downloadSubtitles: Bool?
     var subtitleLanguage: String?
     var subtitleFormat: SubtitleFormat?
+    var sponsorBlock: Bool?
+
+    var splitChapters: Bool?
+    var additionalArguments: String?
     
-    init(name: String, videoCodec: VideoCodec, audioCodec: AudioCodec, videoResolution: VideoResolution, fileType: MediaFileType, embedSubtitles: Bool = false, subtitleLanguage: String = "", subtitleFormat: SubtitleFormat = .srt) {
+    enum CodingKeys: String, CodingKey {
+        case id, name, videoCodec, audioCodec, videoResolution, fileType, subtitleLanguage, subtitleFormat, sponsorBlock, splitChapters, additionalArguments
+        case downloadSubtitles = "embedSubtitles"
+    }
+    
+    init(name: String, videoCodec: VideoCodec, audioCodec: AudioCodec, videoResolution: VideoResolution, fileType: MediaFileType, downloadSubtitles: Bool = false, subtitleLanguage: String = "", subtitleFormat: SubtitleFormat = .srt, sponsorBlock: Bool = false, splitChapters: Bool = false, additionalArguments: String? = nil) {
         self.id = UUID()
         self.name = name
         self.videoCodec = videoCodec
         self.audioCodec = audioCodec
         self.videoResolution = videoResolution
         self.fileType = fileType
-        self.embedSubtitles = embedSubtitles
+        self.downloadSubtitles = downloadSubtitles
         self.subtitleLanguage = subtitleLanguage
         self.subtitleFormat = subtitleFormat
+        self.sponsorBlock = sponsorBlock
+        self.splitChapters = splitChapters
+        self.additionalArguments = additionalArguments
     }
     
     static func loadAll() -> [CustomPreset] {

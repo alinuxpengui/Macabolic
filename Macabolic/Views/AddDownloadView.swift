@@ -7,6 +7,7 @@ struct AddDownloadView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("selectedPreset") private var selectedPreset: String = "max_compatibility"
     @AppStorage("selectedCustomPresetId") private var selectedCustomPresetIdString: String = ""
+    @AppStorage("defaultAdditionalArguments") private var defaultAdditionalArguments: String = ""
     
     @State private var urlInput: String = ""
     @State private var isLoading: Bool = false
@@ -16,13 +17,13 @@ struct AddDownloadView: View {
 
     @State private var saveFolder: URL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
     @State private var fileType: MediaFileType = .mp4
-    @State private var videoResolution: VideoResolution = .best
+    @State private var videoResolution: VideoResolution = .r1080p
     @State private var audioQuality: AudioQuality = .best
     @State private var customFilename: String = ""
     @State private var isVideoTab: Bool = true
     @State private var availableCodecs: [CodecOption] = []
-    @State private var selectedCodec: String = "auto"
-    @State private var selectedAudioCodec: String = "auto"
+    @State private var selectedCodec: String = "h264"
+    @State private var selectedAudioCodec: String = "aac"
     @State private var customPresets: [CustomPreset] = []
     @State private var selectedPresetName: String? = nil
     @State private var presetSubtitleLanguage: String = ""
@@ -37,6 +38,7 @@ struct AddDownloadView: View {
     @State private var embedMetadata: Bool = true
     @State private var splitChapters: Bool = false
     @State private var sponsorBlock: Bool = false
+    @State private var additionalArguments: String = ""
     
     @State private var showFileExistsAlert: Bool = false
     @State private var pendingDownloadOptions: DownloadOptions? = nil
@@ -154,9 +156,19 @@ struct AddDownloadView: View {
                 selectedAudioCodec = customPreset.audioCodec.rawValue
                 isVideoTab = customPreset.fileType.isVideo
                 selectedPresetName = customPreset.name
-                downloadSubtitles = customPreset.embedSubtitles ?? false
-                embedSubtitles = customPreset.embedSubtitles ?? false
-                presetSubtitleLanguage = customPreset.subtitleLanguage ?? ""
+                downloadSubtitles = customPreset.downloadSubtitles ?? false
+                
+                let rawLang = customPreset.subtitleLanguage ?? ""
+                if rawLang.hasPrefix("embed:") {
+                    embedSubtitles = true
+                    presetSubtitleLanguage = rawLang.replacingOccurrences(of: "embed:", with: "")
+                } else {
+                    embedSubtitles = false
+                    presetSubtitleLanguage = rawLang
+                }
+                
+                sponsorBlock = customPreset.sponsorBlock ?? false
+                splitChapters = customPreset.splitChapters ?? false
             } else if let preset = DownloadPreset(rawValue: selectedPreset) {
                 fileType = preset.fileType
                 videoResolution = preset.videoResolution
@@ -178,6 +190,10 @@ struct AddDownloadView: View {
             if !appState.urlToDownload.isEmpty {
                 urlInput = appState.urlToDownload
                 appState.urlToDownload = ""
+            }
+            
+            if additionalArguments.isEmpty {
+                additionalArguments = defaultAdditionalArguments
             }
         }
         .onChange(of: urlInput) { newValue in
@@ -526,9 +542,21 @@ struct AddDownloadView: View {
         videoResolution = preset.videoResolution
         fileType = preset.fileType
         isVideoTab = preset.fileType.isVideo
-        downloadSubtitles = preset.embedSubtitles ?? false
-        embedSubtitles = preset.embedSubtitles ?? false
-        presetSubtitleLanguage = preset.subtitleLanguage ?? ""
+        downloadSubtitles = preset.downloadSubtitles ?? false
+        
+        let rawLang = preset.subtitleLanguage ?? ""
+        if rawLang.hasPrefix("embed:") {
+            embedSubtitles = true
+            presetSubtitleLanguage = rawLang.replacingOccurrences(of: "embed:", with: "")
+        } else {
+            embedSubtitles = false
+            presetSubtitleLanguage = rawLang
+        }
+        
+        subtitleFormat = preset.subtitleFormat ?? .srt
+        sponsorBlock = preset.sponsorBlock ?? false
+        splitChapters = preset.splitChapters ?? false
+        additionalArguments = preset.additionalArguments ?? ""
         
         if !presetSubtitleLanguage.isEmpty && !availableSubtitles.isEmpty {
             if availableSubtitles.contains(where: { $0.id == presetSubtitleLanguage }) {
@@ -638,6 +666,14 @@ struct AddDownloadView: View {
                     Toggle(languageService.s("sponsorblock_hint"), isOn: $sponsorBlock)
                 }
                 .padding(.vertical, 4)
+            }
+            GroupBox(languageService.s("additional_arguments")) {
+                TextField(languageService.s("additional_arguments_hint"), text: $additionalArguments)
+                    .textFieldStyle(.roundedBorder)
+                
+                Text(.init(languageService.s("additional_arguments_help")))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
         .padding(.top, 8)
@@ -798,7 +834,8 @@ struct AddDownloadView: View {
             sponsorBlock: sponsorBlock,
             customFilename: customFilename.isEmpty ? nil : customFilename,
             videoCodec: videoCodecEnum,
-            audioCodec: audioCodecEnum
+            audioCodec: audioCodecEnum,
+            additionalArguments: additionalArguments.isEmpty ? nil : additionalArguments
         )
         
         if downloadMode == .single {

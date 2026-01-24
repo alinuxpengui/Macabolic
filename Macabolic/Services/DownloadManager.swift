@@ -231,9 +231,67 @@ class DownloadManager: ObservableObject {
 
     func removeDownload(_ download: Download) {
         stopDownload(download)
+        
+        // Asenkron temizlik: Prosesin tamamen durması ve dosya kilitlerinin kalkması için kısa bir süre bekle
+        let downloadCopy = download
+        Task {
+            try? await Task.sleep(nanoseconds: 200_000_000) // 200ms bekle
+            cleanupTemporaryFiles(for: downloadCopy)
+        }
+        
         downloads.removeAll { $0.id == download.id }
         history.removeAll { $0.id == download.id }
         saveHistory()
+    }
+    
+    private func cleanupTemporaryFiles(for download: Download) {
+        let fileManager = FileManager.default
+        let folder = download.options.saveFolder
+        
+        // yt-dlp sanitization: Replace invalid characters with underscore
+        let sanitize: (String) -> String = { input in
+            let invalidChars = CharacterSet(charactersIn: "\\/:*?\"<>|")
+            return input.components(separatedBy: invalidChars).joined(separator: "_")
+        }
+        
+        // Extract video ID from URL if possible (common for YouTube)
+        let videoId: String? = {
+            if let url = URL(string: download.url),
+               let components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+                return components.queryItems?.first(where: { $0.name == "v" })?.value ?? url.lastPathComponent
+            }
+            return nil
+        }()
+        
+        let rawBaseName = download.options.customFilename ?? download.title
+        let sanitizedBaseName = sanitize(rawBaseName)
+        
+        do {
+            let contents = try fileManager.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+            let tempExtensions = [".part", ".ytdl", ".webp", ".jpg", ".temp", ".vtt", ".srt", ".ass", ".f1", ".f2", ".f3"]
+            
+            for file in contents {
+                let fileName = file.lastPathComponent
+                
+                // Kontrol kriterleri:
+                // 1. Prefix eşleşmesi (Orijinal veya Sanitize edilmiş başlık)
+                let matchesPrefix = fileName.hasPrefix(rawBaseName) || fileName.hasPrefix(sanitizedBaseName)
+                
+                // 2. ID eşleşmesi (Yt-dlp genellikle dosya adının sonuna [ID] ekler)
+                let matchesId = videoId != nil && fileName.contains(videoId!)
+                
+                if matchesPrefix || matchesId {
+                    let isTemp = tempExtensions.contains { ext in
+                        fileName.lowercased().hasSuffix(ext)
+                    }
+                    if isTemp {
+                        try? fileManager.removeItem(at: file)
+                    }
+                }
+            }
+        } catch {
+            print("Error cleaning up files: \(error)")
+        }
     }
     
 

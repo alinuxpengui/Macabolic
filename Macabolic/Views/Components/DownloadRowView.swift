@@ -24,19 +24,21 @@ struct DownloadListView: View {
             }
         }
         .toolbar {
-            if !downloads.isEmpty {
-                ToolbarItem {
-                    if showStop {
-                        Button {
-                            downloadManager.stopAllDownloads()
-                        } label: {
-                            Label(languageService.s("stop_all"), systemImage: "stop.circle")
-                        }
-                    } else {
-                        Button {
-                            downloadManager.clearDownloads(downloads)
-                        } label: {
-                            Label(languageService.s("clear"), systemImage: "trash")
+            ToolbarItem {
+                Group {
+                    if !downloads.isEmpty {
+                        if showStop {
+                            Button {
+                                downloadManager.stopAllDownloads()
+                            } label: {
+                                Label(languageService.s("stop_all"), systemImage: "stop.circle")
+                            }
+                        } else {
+                            Button {
+                                downloadManager.clearDownloads(downloads)
+                            } label: {
+                                Label(languageService.s("clear"), systemImage: "trash")
+                            }
                         }
                     }
                 }

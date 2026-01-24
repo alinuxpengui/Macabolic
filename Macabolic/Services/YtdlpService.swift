@@ -331,7 +331,8 @@ class YtdlpService: ObservableObject {
         if options.downloadSubtitles && !options.subtitleLanguages.isEmpty {
             let subFormat = options.subtitleFormat?.ytdlpValue ?? "srt"
             args.append(contentsOf: ["--sub-format", "\(subFormat)/best"])
-            args.append(contentsOf: ["--sub-langs", options.subtitleLanguages.joined(separator: ",")])
+            let langList = options.subtitleLanguages.joined(separator: ",")
+            args.append(contentsOf: ["--sub-langs", langList])
             
             args.append("--write-subs")
             args.append("--write-auto-subs")
@@ -351,11 +352,10 @@ class YtdlpService: ObservableObject {
         }
         
 
-        if options.embedMetadata {
-            args.append("--embed-metadata")
-        }
+        // Neonapple feedback: Always embed metadata and chapters
+        args.append("--embed-metadata")
+        args.append("--embed-chapters")
         
-
         if options.splitChapters {
             args.append("--split-chapters")
         }
@@ -373,6 +373,13 @@ class YtdlpService: ObservableObject {
         if options.forceOverwrite == true {
             args.append("--force-overwrites")
         }
+        
+        if let additionalArgs = options.additionalArguments, !additionalArgs.isEmpty {
+            // Basic space splitting for additional arguments
+            let customArgs = additionalArgs.components(separatedBy: .whitespaces)
+                .filter { !$0.isEmpty }
+            args.append(contentsOf: customArgs)
+        }
 
 
         
@@ -386,7 +393,10 @@ class YtdlpService: ObservableObject {
         
         args.append(url)
         
-
+        // Neonapple feedback: Log the full command for debugging
+        let fullCommand = args.map { $0.contains(" ") ? "\"\($0)\"" : $0 }.joined(separator: " ")
+        onOutput("[COMMAND] \(fullCommand)\n")
+        
         let outputPath = try await runDownloadProcess(
             args: args,
             saveFolder: options.saveFolder,
