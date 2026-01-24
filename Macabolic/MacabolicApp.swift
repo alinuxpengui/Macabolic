@@ -82,7 +82,7 @@ class UpdateChecker: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }
 
     private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.3.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.4.0"
     }
     private let repoOwner = "alinuxpengui"
     private let repoName = "Macabolic"
@@ -373,8 +373,8 @@ class LanguageService: ObservableObject {
             "video_url": "Video / Playlist URL",
             "url_hint": "YouTube, Instagram, X (Twitter) video veya oynatma listesi linki...",
             "no_subtitles": "Altyazı bulunamadı",
-            "whats_new_title": "Macabolic v2.3.0 - Yenilikler",
-            "whats_new_message": "• 🗄️ Gelişmiş Geçmiş Yönetimi: Tamamlanan ve hatalı indirmeler artık ayrı listelerde tutuluyor ve uygulama kapatılsa bile kalıcı olarak saklanıyor.\n• 📂 Yenilenen Navigasyon: Kenar çubuğu 'İndirmeler' ve 'Geçmiş' olarak iki ana bölüme ayrılarak kullanım kolaylığı sağlandı.\n• 🔄 Otomatik Güncelleme: İndirme durumları ve sayıları artık anlık olarak kendiliğinden güncelleniyor.\n• 🔃 Yeniden İndir: Tamamlanan veya durdurulan videoları tek tıkla tekrar indirme listesine ekleme özelliği eklendi.\n• 🍪 Akıllı Yönlendirme: Hız limiti (429) hatalarında kullanıcılar doğrudan Çerez ayarlarına yönlendirilerek çözüm odaklı rehberlik sağlandı.",
+            "whats_new_title": "Macabolic v2.4.0 - Yenilikler 🚀",
+            "whats_new_message": "⚠️ ÖNEMLİ DUYURU: Uygulamanın çekirdeğinde macOS 12 Monterey desteği sağlamak için önemli yapısal değişiklikler yapıldı. Beklenmeyen bir davranışla karşılaşırsanız, önceki kararlı sürüme dönmek için lütfen Ayarlar -> Genel -> Tüm Sürümler'e gidin.\n\n✨ Yeni Özellikler\n• Gelişmiş Özel Ayarlar: SponsorBlock (reklam atlama) ve Bölümlere Ayırma ayarlarını artık doğrudan özel şablonlarınıza kaydedebilirsiniz.\n• Zengin Video Verisi: Video açıklamaları, yükleme tarihleri ve bölüm işaretleri artık varsayılan olarak indirmelerinize otomatik gömülür.\n• Gelişmiş Altyazılar: Dil joker karakterleri (örn. en.*) için destek eklendi ve ön ayarlı altyazı ayarlarının doğru uygulanmadığı bir mantık hatası düzeltildi.\n• Topluluk Takdiri: Neonapple'a inanılmaz geri bildirimleri ve katkıları için \"Hakkında\" sekmesine özel bir teşekkür bölümü eklendi.\n\n🛠 Altyapı & Performans\n• macOS Monterey Desteği: Macabolic artık macOS 12 Monterey ve sonraki sürümlerle tam uyumludur.\n• Akıllı Dosya Temizliği: Video ID takibi kullanılarak geliştirilen geçici dosya temizleme mantığı ile artık .part veya .ytdl dosyası kalıntısı kalmayacak.\n• Gelişmiş Hata Ayıklama: Tam yt-dlp komutu artık her indirmenin başında günlüğe kaydediliyor, böylece sorunları gidermek kolaylaşıyor.\n• Hibrit Navigasyon Sistemi: Farklı macOS sürümlerinde akıcı performans sağlamak için yeni, esnek bir navigasyon mimarisi uygulandı.\n• Kod Optimizasyonu: Ayarlar mimarisi daha iyi kararlılık, daha hızlı performans ve daha güvenilir derlemeler için modüler hale getirildi.",
             "paste_from_clipboard": "Panodan Yapıştır",
             "fetch_info": "Bilgi Al",
             "quality": "Kalite",
@@ -427,7 +427,7 @@ class LanguageService: ObservableObject {
             "paused": "Duraklatıldı",
             "stop_all": "Tümünü Durdur",
             "finder": "Finder'da Göster",
-            "retry": "Yeniden Dene",
+            "retry": "Tekrarla / Devam Et",
             "stop": "Durdur",
             "log": "Log Göster",
             "remove": "Kaldır",
@@ -576,8 +576,8 @@ class LanguageService: ObservableObject {
             "video_url": "Video / Playlist URL",
             "url_hint": "YouTube, Instagram, X (Twitter) video or playlist link...",
             "no_subtitles": "No subtitles found",
-            "whats_new_title": "Macabolic v2.3.0 - What's New",
-            "whats_new_message": "• 🗄️ Advanced History: Completed and failed downloads are now categorized separately and persist across app sessions.\n• 📂 Reorganized Navigation: The sidebar is now split into 'Downloading' and 'History' sections for better organization.\n• 🔄 Real-time Updates: Download statuses and counts now update automatically without manual navigation.\n• 🔃 Re-download Support: Easily add completed or failed items back to the download list with a single click.\n• 🍪 Smart Error Guidance: 429 errors now directly guide users to Browser Cookie settings for a quick fix.",
+            "whats_new_title": "Macabolic v2.4.0 - What's New? 🚀",
+            "whats_new_message": "⚠️ IMPORTANT NOTICE: Significant structural changes have been made to the application's core to support macOS 12 Monterey. If you experience any unexpected behavior, please go to Settings -> General -> All Versions to downgrade to a previous stable release.\n\n✨ New Features\n• Advanced Custom Presets: You can now save SponsorBlock (skip ads) and Split Chapters settings directly into your custom presets.\n• Rich Video Metadata: Video descriptions, upload dates, and chapter markers are now automatically embedded into your downloads by default.\n• Enhanced Subtitles: Added support for language wildcards (e.g., en.*) and fixed a logic error where preset subtitle settings were not being applied correctly.\n• Community Recognition: A special thanks section has been added to the \"About\" tab to honor Neonapple for their incredible feedback and contributions.\n\n🛠 Infrastructure & Performance\n• macOS Monterey Support: Macabolic is now fully compatible with macOS 12 Monterey and later versions.\n• Smarter File Cleanup: Improved temporary file removal logic using Video ID tracking, ensuring no .part or .ytdl files are left behind.\n• Advanced Debugging: The full yt-dlp command is now logged at the start of every download, making it easier to troubleshoot issues.\n• Hybrid Navigation System: A new, flexible navigation architecture has been implemented to ensure smooth performance across different macOS versions.\n• Code Optimization: The settings architecture has been modularized for better stability, faster performance, and more reliable builds.",
             "paste_from_clipboard": "Paste from Clipboard",
             "fetch_info": "Get Video Information",
             "quality": "Quality",
@@ -630,7 +630,7 @@ class LanguageService: ObservableObject {
             "paused": "Paused",
             "stop_all": "Stop All",
             "finder": "Show in Finder",
-            "retry": "Retry",
+            "retry": "Retry / Resume",
             "stop": "Stop",
             "log": "Show Log",
             "remove": "Remove",
