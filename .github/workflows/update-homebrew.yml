@@ -3,6 +3,12 @@ name: Update Homebrew Tap
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name to update (e.g. v2.4.1)'
+        required: true
+        default: 'v2.4.1'
 
 jobs:
   update-tap:
@@ -11,15 +17,19 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
+          # Use input tag if available, otherwise use ref name
+          TAG_NAME="${{ github.event.inputs.tag_name || github.ref_name }}"
           # Remove 'v' prefix from tag name
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${TAG_NAME#v}"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Get release asset info
         id: asset
         run: |
           # Get the DMG asset URL and download it to calculate SHA256
-          ASSET_URL="https://github.com/alinuxpengui/Macabolic/releases/download/${{ github.ref_name }}/Macabolic-${{ github.ref_name }}.dmg"
+          TAG_NAME="${{ steps.version.outputs.tag_name }}"
+          ASSET_URL="https://github.com/alinuxpengui/Macabolic/releases/download/${TAG_NAME}/Macabolic-${TAG_NAME}.dmg"
           
           # Download and calculate SHA256
           curl -sL "$ASSET_URL" -o macabolic.dmg
