@@ -94,6 +94,7 @@ Here is what I'm planning to bring to Macabolic in the near future:
 ```bash
 brew tap alinuxpengui/macabolic
 brew install --cask macabolic
+xattr -cr /Applications/Macabolic.app
 ```
 
 ### Option 2: Manual Download
