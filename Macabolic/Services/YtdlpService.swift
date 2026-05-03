@@ -200,7 +200,9 @@ class YtdlpService: ObservableObject {
             path,
             "--dump-json",
             "--no-playlist",
-            "--no-warnings"
+            "--no-warnings",
+            "-f",
+            "bestvideo+bestaudio/best"
         ]
         
         appendCookieArgs(to: &args)
